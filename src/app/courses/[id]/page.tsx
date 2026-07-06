@@ -39,6 +39,23 @@ export default function CourseDetailPage({ params }: PageProps) {
       setLessons(l);
       if (l.length > 0) {
         setCurrentLesson(l[0]);
+        // Automatically log the initial lesson as watched if user has access
+        if (u) {
+          try {
+            const accessVal = u.role === 'admin' || await db.checkUserAccess(u.id, courseId);
+            if (accessVal || l[0].is_free_preview) {
+              const key = `watched_lessons_${u.id}`;
+              const stored = localStorage.getItem(key);
+              let watchedIds: string[] = stored ? JSON.parse(stored) : [];
+              if (!watchedIds.includes(l[0].id)) {
+                watchedIds.push(l[0].id);
+                localStorage.setItem(key, JSON.stringify(watchedIds));
+              }
+            }
+          } catch (e) {
+            console.error(e);
+          }
+        }
       }
 
       if (u) {
@@ -56,6 +73,24 @@ export default function CourseDetailPage({ params }: PageProps) {
 
   const handleLessonClick = (lesson: Lesson) => {
     setCurrentLesson(lesson);
+    
+    // Log progress to localStorage if user is logged in
+    if (currentUser) {
+      try {
+        const isUnlocked = hasAccess || lesson.is_free_preview;
+        if (isUnlocked) {
+          const key = `watched_lessons_${currentUser.id}`;
+          const stored = localStorage.getItem(key);
+          let watchedIds: string[] = stored ? JSON.parse(stored) : [];
+          if (!watchedIds.includes(lesson.id)) {
+            watchedIds.push(lesson.id);
+            localStorage.setItem(key, JSON.stringify(watchedIds));
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
   };
 
   const handleBuyCourse = async () => {

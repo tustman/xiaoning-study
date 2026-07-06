@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>我的学习 — 小宁学习</title>
+<style>
+:root {
+  --bg:      oklch(99% 0.002 240);
+  --surface: oklch(100% 0 0);
+  --fg:      oklch(18% 0.012 250);
+  --muted:   oklch(54% 0.012 250);
+  --border:  oklch(92% 0.005 250);
+  --accent:  oklch(58% 0.18 255);
+  --accent-subtle: oklch(from var(--accent) 0.95 0.04 255);
+  --accent-glow:   oklch(from var(--accent) 0.65 0.12 255);
+  --green:   oklch(55% 0.14 145);
+  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+  --font-body:    -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, monospace;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; }
+body {
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--fg);
+  background: var(--bg);
+  min-height: 100vh;
+}
+a { color: inherit; text-decoration: none; }
+ul { list-style: none; }
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  width: 100%;
+}
+
+/* ===== NAV ===== */
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  background: oklch(from var(--bg) 0.97 0.002 240 / 0.8);
+  border-bottom: 1px solid var(--border);
+}
+nav .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+}
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+}
+.nav-brand-mark {
+  width: 32px;
+  height: 32px;
+  background: var(--accent);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+}
+.nav-links { display: flex; align-items: center; gap: 4px; }
+.nav-links a {
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 480;
+  color: var(--muted);
+  transition: all 0.15s;
+}
+.nav-links a:hover { color: var(--fg); background: var(--border); }
+.nav-links a.active { color: var(--accent); font-weight: 550; }
+.nav-actions { display: flex; align-items: center; gap: 8px; }
+.nav-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--fg);
+  font-size: 24px;
+  cursor: pointer;
+  padding: 8px;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 28px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 550;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  letter-spacing: -0.01em;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-glow); }
+
+/* ===== PAGE ===== */
+.page-header {
+  padding: 48px 0 32px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.page-header h1 {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+.profile-avatar-sm {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+/* ===== SECTION ===== */
+.section-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+.section-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 28px 0;
+}
+.section-card-header h2 {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+}
+.section-card-header a {
+  font-size: 13px;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+/* ===== PROGRESS ===== */
+.progress-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 28px;
+  border-bottom: 1px solid var(--border);
+}
+.progress-item:last-child { border-bottom: none; }
+.progress-thumb {
+  width: 72px;
+  height: 52px;
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 18px;
+}
+.progress-info { flex: 1; min-width: 0; }
+.progress-info h3 {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.progress-info .progress-meta {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.progress-bar-bg {
+  height: 5px;
+  background: var(--border);
+  border-radius: 100px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 100px;
+  background: var(--accent);
+  transition: width 0.4s ease;
+}
+.progress-pct {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 500;
+  min-width: 36px;
+  text-align: right;
+}
+.status-done { color: var(--green); }
+
+@media (max-width: 920px) {
+  .nav-links { display: none; }
+  .nav-toggle { display: block; }
+  .nav-links.open {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 64px;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px;
+    gap: 4px;
+  }
+  .nav-links.open a { padding: 12px 16px; width: 100%; }
+}
+
+@media (max-width: 600px) {
+  .container { padding: 0 16px; }
+  .page-header { padding: 32px 0 24px; }
+  .progress-item { flex-wrap: wrap; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="container">
+    <a href="index.html" class="nav-brand">
+      <span class="nav-brand-mark">宁</span>
+      小宁学习
+    </a>
+    <div class="nav-links" id="navLinks">
+      <a href="index.html">首页</a>
+      <a href="courses.html">课程</a>
+      <a href="profile.html" class="active">我的学习</a>
+    </div>
+    <div class="nav-actions">
+      <span class="profile-avatar-sm" style="width:34px;height:34px;font-size:14px;cursor:pointer;">宁</span>
+    </div>
+    <button class="nav-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')" aria-label="菜单">☰</button>
+  </div>
+</nav>
+
+<div class="container">
+
+  <div class="page-header">
+    <span class="profile-avatar-sm">宁</span>
+    <h1>我的课程</h1>
+  </div>
+
+  <!-- 进行中的课程 -->
+  <div class="section-card">
+    <div class="section-card-header">
+      <h2>进行中的课程</h2>
+      <a href="courses.html">继续选课 →</a>
+    </div>
+
+    <div class="progress-item">
+      <div class="progress-thumb" style="background:oklch(from var(--accent) 0.92 0.05 255);">🐍</div>
+      <div class="progress-info">
+        <h3>Python 零基础入门</h3>
+        <p class="progress-meta">林老师 · 课时 18/42</p>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:43%"></div></div>
+      </div>
+      <span class="progress-pct">43%</span>
+    </div>
+
+    <div class="progress-item">
+      <div class="progress-thumb" style="background:oklch(from var(--accent) 0.90 0.06 235);">⚛️</div>
+      <div class="progress-info">
+        <h3>React 实战 · 企业级项目</h3>
+        <p class="progress-meta">张老师 · 课时 8/58</p>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:14%"></div></div>
+      </div>
+      <span class="progress-pct">14%</span>
+    </div>
+
+    <div class="progress-item">
+      <div class="progress-thumb" style="background:oklch(from var(--accent) 0.88 0.08 245);">🤖</div>
+      <div class="progress-info">
+        <h3>AI 应用开发实战</h3>
+        <p class="progress-meta">王老师 · 课时 3/36</p>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:8%"></div></div>
+      </div>
+      <span class="progress-pct">8%</span>
+    </div>
+  </div>
+
+  <!-- 已完成的课程 -->
+  <div class="section-card">
+    <div class="section-card-header">
+      <h2>已完成的课程</h2>
+    </div>
+
+    <div class="progress-item">
+      <div class="progress-thumb" style="background:oklch(55% 0.14 145);">🌐</div>
+      <div class="progress-info">
+        <h3>HTML & CSS 从零到精通</h3>
+        <p class="progress-meta">陈老师 · 32 课时 · 完成于 2026 年 5 月</p>
+      </div>
+      <span class="progress-pct status-done">100%</span>
+    </div>
+
+    <div class="progress-item">
+      <div class="progress-thumb" style="background:oklch(55% 0.14 145);">📜</div>
+      <div class="progress-info">
+        <h3>JavaScript 核心概念</h3>
+        <p class="progress-meta">周老师 · 28 课时 · 完成于 2026 年 4 月</p>
+      </div>
+      <span class="progress-pct status-done">100%</span>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

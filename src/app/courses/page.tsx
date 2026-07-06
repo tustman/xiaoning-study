@@ -2,10 +2,15 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { db, UserProfile } from '@/lib/db';
-import { Mail, Key, Sparkles, X } from 'lucide-react';
+import { db, Course, Lesson, UserProfile } from '@/lib/db';
+import { Mail, Key, Sparkles, X, Play, BookOpen, Star } from 'lucide-react';
 
-export default function Home() {
+interface ExtendedCourse extends Course {
+  lessons: Lesson[];
+}
+
+export default function CoursesPage() {
+  const [courses, setCourses] = useState<ExtendedCourse[]>([]);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -20,7 +25,19 @@ export default function Home() {
 
   useEffect(() => {
     async function loadData() {
-      // Sync real Supabase session
+      const allCourses = await db.getCourses();
+      const published = allCourses.filter(c => c.status === 'published');
+      
+      const coursesWithLessons: ExtendedCourse[] = [];
+      for (const course of published) {
+        const lessons = await db.getLessons(course.id);
+        coursesWithLessons.push({
+          ...course,
+          lessons: lessons.sort((a, b) => a.order_index - b.order_index)
+        });
+      }
+      setCourses(coursesWithLessons);
+      
       const activeUser = await db.syncSessionUserProfile();
       setCurrentUser(activeUser);
       setLoading(false);
@@ -89,11 +106,22 @@ export default function Home() {
     window.location.reload();
   };
 
+  const getCourseLevel = (price: number, title: string) => {
+    const t = title.toLowerCase();
+    if (t.includes('实战') || t.includes('企业级') || price > 200) {
+      return { label: '进阶', className: 'level-intermediate' };
+    }
+    if (t.includes('高级') || t.includes('架构') || price > 400) {
+      return { label: '高级', className: 'level-advanced' };
+    }
+    return { label: '入门', className: 'level-beginner' };
+  };
+
   if (loading) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center min-h-screen bg-[#fafbfe]">
         <div className="w-8 h-8 border-2 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
-        <p className="mt-3 text-slate-500 text-xs font-semibold">正在载入小宁学习...</p>
+        <p className="mt-3 text-slate-500 text-xs font-semibold">正在载入课程列表...</p>
       </div>
     );
   }
@@ -102,7 +130,7 @@ export default function Home() {
     <div className="flex flex-col min-h-screen bg-[var(--bg)] text-[var(--fg)]">
       
       {/* ===== NAVIGATION ===== */}
-      <nav className="sticky top-0 z-40 backdrop-blur-md border-b border-[var(--border)] bg-white/80">
+      <nav className="sticky top-0 z-45 backdrop-blur-md border-b border-[var(--border)] bg-white/80">
         <div className="max-w-[1200px] mx-auto px-6 flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-2.5 font-bold text-lg text-[var(--fg)] tracking-tight">
             <span className="w-8 h-8 bg-[var(--accent)] rounded-lg flex items-center justify-center text-white text-base font-extrabold shadow-sm">
@@ -112,10 +140,10 @@ export default function Home() {
           </Link>
           
           <div className="hidden md:flex items-center gap-1 font-semibold text-xs text-[var(--muted)]">
-            <Link href="/" className="px-4 py-2 rounded-md hover:text-[var(--fg)] hover:bg-[var(--border)] text-[var(--accent)] active">
+            <Link href="/" className="px-4 py-2 rounded-md hover:text-[var(--fg)] hover:bg-[var(--border)]">
               首页
             </Link>
-            <Link href="/courses" className="px-4 py-2 rounded-md hover:text-[var(--fg)] hover:bg-[var(--border)]">
+            <Link href="/courses" className="px-4 py-2 rounded-md hover:text-[var(--fg)] hover:bg-[var(--border)] text-[var(--accent)] font-bold">
               课程
             </Link>
             {currentUser && (
@@ -179,162 +207,101 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* ===== HERO ===== */}
-      <section className="relative py-24 sm:py-32 text-center max-w-[1200px] mx-auto w-full px-6 overflow-hidden">
-        {/* Subtle glow background */}
-        <div className="absolute top-[-100px] left-1/2 -translate-x-1/2 w-[700px] h-[700px] bg-[radial-gradient(circle,oklch(from_var(--accent)_0.94_0.03_255)_0%,transparent_70%)] opacity-60 pointer-events-none -z-10"></div>
-        
-        <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[var(--accent-subtle)] text-[var(--accent)] mb-6 font-mono tracking-wide">
-          ✦ 零基础也能学会编程
-        </div>
-        
-        <h1 className="text-4xl sm:text-6.5xl font-extrabold tracking-tight leading-[1.1] text-[var(--fg)] max-w-4xl mx-auto">
-          从零开始，<span className="text-[var(--accent)]">学会编程</span><br />改变未来
-        </h1>
-        
-        <p className="mt-6 text-sm sm:text-lg text-[var(--muted)] max-w-xl mx-auto leading-relaxed">
-          小宁学习为你提供从入门到实战的系统编程课程。AI 辅助教学、项目驱动、社区陪伴，让学编程不再孤单。
-        </p>
+      {/* ===== PAGE HEADER ===== */}
+      <div className="max-w-[1200px] mx-auto w-full px-6 py-12">
+        <h1 className="text-3xl font-extrabold tracking-tight text-[var(--fg)]">全部课程</h1>
+        <p className="text-sm text-[var(--muted)] mt-1.5">找到适合你当前水平的课程，从入门到精通，系统化学习编程。</p>
+      </div>
 
-        <div className="flex justify-center gap-3 mt-10">
-          <Link href="/courses" className="btn btn-primary text-sm px-7 py-3">
-            立即开始选课
-          </Link>
-          <a href="#features" className="btn btn-outline text-sm px-7 py-3">
-            了解平台特色
-          </a>
-        </div>
-      </section>
+      {/* ===== COURSES GRID ===== */}
+      <main className="max-w-[1200px] mx-auto w-full px-6 flex-1 mb-16">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {courses.map((course) => {
+            const priceVal = Number(course.price);
+            const levelInfo = getCourseLevel(priceVal, course.title);
+            
+            return (
+              <div 
+                key={course.id}
+                onClick={() => window.location.href = `/courses/${course.id}`}
+                className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-lg)] overflow-hidden transition-all duration-200 hover:translate-y-[-3px] hover:shadow-lg hover:shadow-slate-900/5 hover:border-slate-350 cursor-pointer flex flex-col justify-between"
+              >
+                
+                {/* Course Card Thumb */}
+                <div 
+                  className="h-40 relative flex items-center justify-center overflow-hidden bg-slate-100"
+                >
+                  {course.cover_image ? (
+                    <img 
+                      src={course.cover_image} 
+                      alt={course.title}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-[oklch(from_var(--accent)_0.94_0.03_255)] flex items-center justify-center text-4xl">
+                      宁
+                    </div>
+                  )}
+                  
+                  {/* Level Tag */}
+                  <span className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase ${
+                    levelInfo.label === '入门' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100/50' : 
+                    levelInfo.label === '进阶' ? 'bg-amber-50 text-amber-600 border border-amber-100/50' : 
+                    'bg-rose-50 text-rose-600 border border-rose-100/50'
+                  }`}>
+                    {levelInfo.label}
+                  </span>
 
-      {/* ===== FEATURES ===== */}
-      <section id="features" className="py-20 border-t border-[var(--border)] bg-white/40">
-        <div className="max-w-[1200px] mx-auto px-6">
-          <div className="text-center mb-16">
-            <span className="font-mono text-xs text-[var(--accent)] tracking-widest uppercase font-bold">
-              为什么选择小宁学习
-            </span>
-            <h2 className="text-3xl font-extrabold text-[var(--fg)] mt-3 leading-tight">不只是看视频，是真正学会</h2>
-            <p className="text-[13px] text-[var(--muted)] mt-2">我们构建了一套完整的学习闭环，确保每个人都能跟上。</p>
-          </div>
-
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            <div className="p-8 border border-[var(--border)] rounded-[var(--radius-lg)] bg-[var(--surface)] hover:border-slate-350 transition-all">
-              <div className="w-11 h-11 rounded-lg bg-[var(--accent-subtle)] text-[var(--accent)] flex items-center justify-center text-lg mb-5">
-                ⌨
-              </div>
-              <h3 className="font-bold text-base text-[var(--fg)] mb-2">项目驱动学习</h3>
-              <p className="text-xs text-[var(--muted)] leading-relaxed">每门课程都包含多个实战项目，边学边做，在真实场景中掌握技能。</p>
-            </div>
-
-            <div className="p-8 border border-[var(--border)] rounded-[var(--radius-lg)] bg-[var(--surface)] hover:border-slate-350 transition-all">
-              <div className="w-11 h-11 rounded-lg bg-[var(--accent-subtle)] text-[var(--accent)] flex items-center justify-center text-lg mb-5">
-                🤖
-              </div>
-              <h3 className="font-bold text-base text-[var(--fg)] mb-2">AI 助教陪伴</h3>
-              <p className="text-xs text-[var(--muted)] leading-relaxed">遇到问题随时向 AI 助教提问，不用等老师回复，24 小时全天候答疑。</p>
-            </div>
-
-            <div className="p-8 border border-[var(--border)] rounded-[var(--radius-lg)] bg-[var(--surface)] hover:border-slate-350 transition-all">
-              <div className="w-11 h-11 rounded-lg bg-[var(--accent-subtle)] text-[var(--accent)] flex items-center justify-center text-lg mb-5">
-                👥
-              </div>
-              <h3 className="font-bold text-base text-[var(--fg)] mb-2">社区互助成长</h3>
-              <p className="text-xs text-[var(--muted)] leading-relaxed">加入学习社群，和志同道合的伙伴一起打卡、讨论、组队做项目。</p>
-            </div>
-
-            <div className="p-8 border border-[var(--border)] rounded-[var(--radius-lg)] bg-[var(--surface)] hover:border-slate-350 transition-all">
-              <div className="w-11 h-11 rounded-lg bg-[var(--accent-subtle)] text-[var(--accent)] flex items-center justify-center text-lg mb-5">
-                📊
-              </div>
-              <h3 className="font-bold text-base text-[var(--fg)] mb-2">学习路径规划</h3>
-              <p className="text-xs text-[var(--muted)] leading-relaxed">根据你的基础和目标，智能推荐学习路径，避免走弯路。</p>
-            </div>
-
-            <div className="p-8 border border-[var(--border)] rounded-[var(--radius-lg)] bg-[var(--surface)] hover:border-slate-350 transition-all">
-              <div className="w-11 h-11 rounded-lg bg-[var(--accent-subtle)] text-[var(--accent)] flex items-center justify-center text-lg mb-5">
-                🏆
-              </div>
-              <h3 className="font-bold text-base text-[var(--fg)] mb-2">成就激励系统</h3>
-              <p className="text-xs text-[var(--muted)] leading-relaxed">完成任务获得勋章和学分，保持学习动力，让进步可见。</p>
-            </div>
-
-            <div className="p-8 border border-[var(--border)] rounded-[var(--radius-lg)] bg-[var(--surface)] hover:border-slate-350 transition-all">
-              <div className="w-11 h-11 rounded-lg bg-[var(--accent-subtle)] text-[var(--accent)] flex items-center justify-center text-lg mb-5">
-                📱
-              </div>
-              <h3 className="font-bold text-base text-[var(--fg)] mb-2">多端同步学习</h3>
-              <p className="text-xs text-[var(--muted)] leading-relaxed">电脑、平板、手机，学习进度实时同步，随时随地都能学。</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ===== TESTIMONIALS ===== */}
-      <section className="py-20 border-t border-[var(--border)] bg-slate-50/30">
-        <div className="max-w-[1200px] mx-auto px-6">
-          <div className="text-center mb-16">
-            <span className="font-mono text-xs text-[var(--accent)] tracking-widest uppercase font-bold">
-              学员心声
-            </span>
-            <h2 className="text-3xl font-extrabold text-[var(--fg)] mt-3 leading-tight">他们在这里改变了职业轨迹</h2>
-          </div>
-
-          <div className="grid gap-8 md:grid-cols-2">
-            <div className="p-8 border border-[var(--border)] rounded-[var(--radius-lg)] bg-[var(--surface)]">
-              <p className="text-sm italic leading-relaxed text-[var(--fg)] mb-6">
-                「零基础转行学 Python，3 个月后做出了自己的第一个 Web 应用。小宁学习的项目驱动方式真的非常适合自学。」
-              </p>
-              <div className="flex items-center gap-3">
-                <span className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 font-bold">
-                  李
-                </span>
-                <div>
-                  <div className="font-bold text-[13px]">李小明</div>
-                  <div className="text-[11px] text-[var(--muted)]">Python 全栈 · 在职转行</div>
+                  <span className="w-11 h-11 rounded-full bg-white/95 flex items-center justify-center text-[var(--accent)] text-xs shadow-md shadow-black/5 opacity-0 hover:opacity-100 hover:scale-105 transition-all">
+                    ▶
+                  </span>
                 </div>
-              </div>
-            </div>
 
-            <div className="p-8 border border-[var(--border)] rounded-[var(--radius-lg)] bg-[var(--surface)]">
-              <p className="text-sm italic leading-relaxed text-[var(--fg)] mb-6">
-                「AI 助教功能太强了，遇到 BUG 直接提问就能得到解答。比起自己百度效率提升太多了，强烈推荐！」
-              </p>
-              <div className="flex items-center gap-3">
-                <span className="w-10 h-10 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-600 font-bold">
-                  陈
-                </span>
-                <div>
-                  <div className="font-bold text-[13px]">陈思远</div>
-                  <div className="text-[11px] text-[var(--muted)]">前端开发 · 大三学生</div>
+                {/* Course Card Body */}
+                <div className="p-5 flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="font-bold text-base text-[var(--fg)] leading-snug line-clamp-1 mb-1.5">
+                      {course.title}
+                    </h3>
+                    <div 
+                      className="text-xs text-[var(--muted)] leading-relaxed line-clamp-2 mb-3.5"
+                      dangerouslySetInnerHTML={{ __html: course.description }}
+                    />
+                    
+                    {/* Meta Row */}
+                    <div className="flex items-center gap-4 text-[11px] text-[var(--muted)] font-semibold">
+                      <span>📹 {course.lessons.length} 课时</span>
+                      <span>⏱ {Math.ceil(course.lessons.reduce((acc, curr) => acc + curr.duration, 0) / 3600)} 小时</span>
+                      <span className="flex items-center gap-0.5"><Star className="h-3 w-3 fill-amber-400 stroke-amber-400" /> 4.9</span>
+                    </div>
+                  </div>
+
+                  {/* Card Footer */}
+                  <div className="border-t border-[var(--border)] mt-4.5 pt-4 flex items-center justify-between">
+                    <span className="flex items-center gap-2 text-xs text-[var(--muted)] font-semibold">
+                      <span className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center font-bold text-[10px] text-slate-500">
+                        小
+                      </span>
+                      小宁老师
+                    </span>
+                    <span className={`font-bold text-[13px] ${priceVal === 0 ? 'text-emerald-600' : 'text-[var(--accent)]'}`}>
+                      {priceVal === 0 ? '免费' : `¥${priceVal.toFixed(2)}`}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* ===== CTA ===== */}
-      <section className="py-20 border-t border-[var(--border)] px-6">
-        <div className="max-w-[1200px] mx-auto bg-[var(--fg)] text-white rounded-[var(--radius-xl)] p-12 sm:p-16 text-center">
-          <h2 className="text-2xl sm:text-4.5xl font-extrabold tracking-tight mb-3">开始你的编程之旅</h2>
-          <p className="text-sm opacity-70 mb-8 max-w-lg mx-auto">用编程打开新世界的大门。</p>
-          <button 
-            onClick={() => {
-              if (currentUser) {
-                window.location.href = '/courses';
-              } else {
-                setAuthMode('register');
-                setAuthError('');
-                setAuthSuccess('');
-                setShowAuthModal(true);
-              }
-            }}
-            className="btn btn-primary text-sm px-8 py-3.5 bg-white text-slate-900 hover:bg-slate-100"
-          >
-            {currentUser ? '浏览精选课程 →' : '免费注册账号 →'}
-          </button>
+              </div>
+            );
+          })}
+
+          {courses.length === 0 && (
+            <div className="col-span-full py-16 text-center bg-white rounded-3xl border border-[var(--border)]">
+              <BookOpen className="h-8 w-8 text-slate-300 mx-auto mb-3" />
+              <p className="text-slate-400 text-xs font-bold">暂无上架课程，敬请期待。</p>
+            </div>
+          )}
         </div>
-      </section>
+      </main>
 
       {/* ===== FOOTER ===== */}
       <footer className="border-t border-[var(--border)] bg-white py-12 px-6">

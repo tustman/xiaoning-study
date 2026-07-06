@@ -1,0 +1,580 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>小宁学习 — 在线编程学习平台</title>
+<style>
+/* ===== 1. DESIGN TOKENS ===== */
+:root {
+  --bg:      oklch(99% 0.002 240);
+  --surface: oklch(100% 0 0);
+  --fg:      oklch(18% 0.012 250);
+  --muted:   oklch(54% 0.012 250);
+  --border:  oklch(92% 0.005 250);
+  --accent:  oklch(58% 0.18 255);
+
+  --accent-subtle: oklch(from var(--accent) 0.95 0.04 255);
+  --accent-glow:   oklch(from var(--accent) 0.65 0.12 255);
+  --green:   oklch(55% 0.14 145);
+  --amber:   oklch(65% 0.14 85);
+  --rose:    oklch(55% 0.14 10);
+
+  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+  --font-body:    -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, monospace;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+}
+
+/* ===== 2. RESET & BASE ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+body {
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--fg);
+  background: var(--bg);
+}
+img { max-width: 100%; display: block; }
+a { color: inherit; text-decoration: none; }
+ul { list-style: none; }
+
+/* ===== 3. UTILITY ===== */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  width: 100%;
+}
+.section { padding: 80px 0; }
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+.section-title {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 3.6vw, 44px);
+  font-weight: 650;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+  margin-bottom: 16px;
+  color: var(--fg);
+}
+.section-sub {
+  font-size: clamp(15px, 1.2vw, 18px);
+  color: var(--muted);
+  max-width: 600px;
+  line-height: 1.6;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 28px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 550;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  letter-spacing: -0.01em;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover { background: var(--accent-glow); transform: translateY(-1px); }
+.btn-outline {
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--border);
+}
+.btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+.btn-ghost {
+  background: transparent;
+  color: var(--muted);
+  padding: 8px 16px;
+}
+.btn-ghost:hover { color: var(--fg); background: var(--border); }
+
+/* ===== 4. NAVIGATION ===== */
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  background: oklch(from var(--bg) 0.97 0.002 240 / 0.8);
+  border-bottom: 1px solid var(--border);
+}
+nav .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+}
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+}
+.nav-brand-mark {
+  width: 32px;
+  height: 32px;
+  background: var(--accent);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+}
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.nav-links a {
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 480;
+  color: var(--muted);
+  transition: all 0.15s;
+}
+.nav-links a:hover { color: var(--fg); background: var(--border); }
+.nav-links a.active { color: var(--accent); font-weight: 550; }
+.nav-actions { display: flex; align-items: center; gap: 8px; }
+.nav-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--fg);
+  font-size: 24px;
+  cursor: pointer;
+  padding: 8px;
+}
+
+/* ===== 5. HERO ===== */
+.hero {
+  padding: 80px 0 100px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -240px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 800px;
+  height: 800px;
+  background: radial-gradient(circle, oklch(from var(--accent) 0.92 0.04 255) 0%, transparent 70%);
+  opacity: 0.5;
+  pointer-events: none;
+}
+.hero .container { position: relative; }
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 100px;
+  background: var(--accent-subtle);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 24px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.02em;
+}
+.hero h1 {
+  font-family: var(--font-display);
+  font-size: clamp(36px, 5vw, 64px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin-bottom: 20px;
+  max-width: 800px;
+  margin-inline: auto;
+}
+.hero h1 span { color: var(--accent); }
+.hero p {
+  font-size: clamp(16px, 1.3vw, 20px);
+  color: var(--muted);
+  max-width: 600px;
+  margin: 0 auto 36px;
+  line-height: 1.7;
+}
+
+/* ===== 6. FEATURES ===== */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+  margin-top: 48px;
+}
+.feature-card {
+  padding: 32px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  transition: all 0.25s;
+}
+.feature-card:hover { border-color: oklch(from var(--accent) 0.85 0.06 255); }
+.feature-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  margin-bottom: 20px;
+  background: var(--accent-subtle);
+  color: var(--accent);
+}
+.feature-card h3 {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-bottom: 8px;
+}
+.feature-card p {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+/* ===== 7. TESTIMONIALS ===== */
+.testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  margin-top: 48px;
+}
+.testimonial-card {
+  padding: 32px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.testimonial-text {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--fg);
+  margin-bottom: 20px;
+  font-style: italic;
+}
+.testimonial-author {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.testimonial-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--border);
+}
+.testimonial-name {
+  font-weight: 550;
+  font-size: 14px;
+}
+.testimonial-role {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ===== 11. CTA ===== */
+.cta-section {
+  background: var(--fg);
+  color: #fff;
+  border-radius: var(--radius-xl);
+  padding: 64px;
+  text-align: center;
+}
+.cta-section h2 {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 3vw, 40px);
+  font-weight: 650;
+  letter-spacing: -0.025em;
+  margin-bottom: 12px;
+}
+.cta-section p {
+  font-size: 16px;
+  opacity: 0.65;
+  margin-bottom: 32px;
+  max-width: 500px;
+  margin-inline: auto;
+}
+.cta-section .btn-primary {
+  background: #fff;
+  color: var(--fg);
+  font-weight: 600;
+}
+.cta-section .btn-primary:hover { background: oklch(0.9 0 0); }
+
+/* ===== 12. FOOTER ===== */
+footer {
+  padding: 48px 0 32px;
+  border-top: 1px solid var(--border);
+}
+.footer-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 40px;
+  margin-bottom: 40px;
+}
+.footer-brand p {
+  font-size: 14px;
+  color: var(--muted);
+  max-width: 300px;
+  margin-top: 12px;
+  line-height: 1.6;
+}
+footer h4 {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+footer ul li { margin-bottom: 10px; }
+footer ul li a {
+  font-size: 14px;
+  color: var(--muted);
+  transition: color 0.15s;
+}
+footer ul li a:hover { color: var(--fg); }
+.footer-bottom {
+  border-top: 1px solid var(--border);
+  padding-top: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* ===== 13. RESPONSIVE ===== */
+@media (max-width: 920px) {
+  .nav-links { display: none; }
+  .nav-toggle { display: block; }
+  .nav-links.open {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 64px;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px;
+    gap: 4px;
+  }
+  .nav-links.open a { padding: 12px 16px; width: 100%; }
+
+  .features-grid { grid-template-columns: 1fr; }
+  .testimonials-grid { grid-template-columns: 1fr; }
+  .footer-grid { grid-template-columns: 1fr 1fr; }
+  .cta-section { padding: 40px 24px; }
+}
+
+@media (max-width: 600px) {
+  .section { padding: 48px 0; }
+  .container { padding: 0 16px; }
+  .hero { padding: 48px 0 64px; }
+  .footer-grid { grid-template-columns: 1fr; }
+  .footer-bottom { flex-direction: column; gap: 8px; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== NAVIGATION ===== -->
+<nav>
+  <div class="container">
+    <a href="index.html" class="nav-brand">
+      <span class="nav-brand-mark">宁</span>
+      小宁学习
+    </a>
+    <div class="nav-links" id="navLinks">
+      <a href="index.html" class="active">首页</a>
+      <a href="courses.html">课程</a>
+      <a href="profile.html">我的学习</a>
+    </div>
+    <div class="nav-actions">
+      <a href="login.html" class="btn btn-ghost">登录</a>
+      <a href="login.html" class="btn btn-primary" style="padding:8px 20px;font-size:14px;">免费注册</a>
+    </div>
+    <button class="nav-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')" aria-label="菜单">☰</button>
+  </div>
+</nav>
+
+<!-- ===== HERO ===== -->
+<section class="hero" data-od-id="hero">
+  <div class="container">
+    <div class="hero-badge">✦ 零基础也能学会编程</div>
+    <h1>从零开始，<span>学会编程</span><br>改变未来</h1>
+    <p>小宁学习为你提供从入门到实战的系统编程课程。AI 辅助教学、项目驱动、社区陪伴，让学编程不再孤单。</p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ===== FEATURES ===== -->
+<section class="section" data-od-id="features">
+  <div class="container">
+    <div style="text-align:center;">
+      <div class="section-label">为什么选择小宁学习</div>
+      <h2 class="section-title">不只是看视频，是真正学会</h2>
+      <p class="section-sub" style="margin:0 auto 0;">我们构建了一套完整的学习闭环，确保每个人都能跟上。</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon" style="background:oklch(from var(--accent) 0.93 0.05 255);">⌨</div>
+        <h3>项目驱动学习</h3>
+        <p>每门课程都包含多个实战项目，边学边做，在真实场景中掌握技能。</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:oklch(from var(--accent) 0.93 0.05 255);">🤖</div>
+        <h3>AI 助教陪伴</h3>
+        <p>遇到问题随时向 AI 助教提问，不用等老师回复，24 小时全天候答疑。</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:oklch(from var(--accent) 0.93 0.05 255);">👥</div>
+        <h3>社区互助成长</h3>
+        <p>加入学习社群，和志同道合的伙伴一起打卡、讨论、组队做项目。</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:oklch(from var(--accent) 0.93 0.05 255);">📊</div>
+        <h3>学习路径规划</h3>
+        <p>根据你的基础和目标，智能推荐学习路径，避免走弯路。</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:oklch(from var(--accent) 0.93 0.05 255);">🏆</div>
+        <h3>成就激励系统</h3>
+        <p>完成任务获得勋章和学分，保持学习动力，让进步可见。</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:oklch(from var(--accent) 0.93 0.05 255);">📱</div>
+        <h3>多端同步学习</h3>
+        <p>电脑、平板、手机，学习进度实时同步，随时随地都能学。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== TESTIMONIALS ===== -->
+<section class="section" data-od-id="testimonials">
+  <div class="container">
+    <div style="text-align:center;">
+      <div class="section-label">学员心声</div>
+      <h2 class="section-title">他们在这里改变了职业轨迹</h2>
+    </div>
+    <div class="testimonials-grid">
+      <div class="testimonial-card">
+        <p class="testimonial-text">「零基础转行学 Python，3 个月后做出了自己的第一个 Web 应用。小宁学习的项目驱动方式真的非常适合自学。」</p>
+        <div class="testimonial-author">
+          <span class="testimonial-avatar" style="background:oklch(55% 0.12 200);"></span>
+          <div>
+            <div class="testimonial-name">李小明</div>
+            <div class="testimonial-role">Python 全栈 · 在职转行</div>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial-card">
+        <p class="testimonial-text">「AI 助教功能太强了，遇到 BUG 直接提问就能得到解答。比起自己百度效率提升太多了，强烈推荐！」</p>
+        <div class="testimonial-author">
+          <span class="testimonial-avatar" style="background:oklch(50% 0.10 330);"></span>
+          <div>
+            <div class="testimonial-name">陈思远</div>
+            <div class="testimonial-role">前端开发 · 大三学生</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CTA ===== -->
+<section class="section" data-od-id="cta" style="padding-bottom:100px;">
+  <div class="container">
+    <div class="cta-section">
+      <h2>开始你的编程之旅</h2>
+      <p>用编程打开新世界的大门。</p>
+      <a href="login.html" class="btn btn-primary" style="font-size:16px;padding:14px 36px;">免费注册 →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="index.html" class="nav-brand" style="margin-bottom:12px;">
+          <span class="nav-brand-mark">宁</span>
+          小宁学习
+        </a>
+        <p>让每个人都能学会编程。小宁学习 — 用心做教育，用技术改变未来。</p>
+      </div>
+      <div>
+        <h4>课程</h4>
+        <ul>
+          <li><a href="courses.html">Python 入门</a></li>
+          <li><a href="courses.html">前端开发</a></li>
+          <li><a href="courses.html">AI 应用</a></li>
+          <li><a href="courses.html">全部课程</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>关于</h4>
+        <ul>
+          <li><a href="#">关于我们</a></li>
+          <li><a href="#">讲师入驻</a></li>
+          <li><a href="#">帮助中心</a></li>
+          <li><a href="#">联系我们</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>法律</h4>
+        <ul>
+          <li><a href="#">用户协议</a></li>
+          <li><a href="#">隐私政策</a></li>
+          <li><a href="#">版权声明</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 小宁学习. All rights reserved.</span>
+      <span>用 ❤️ 做教育</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

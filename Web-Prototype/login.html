@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>登录 — 小宁学习</title>
+<style>
+:root {
+  --bg:      oklch(99% 0.002 240);
+  --surface: oklch(100% 0 0);
+  --fg:      oklch(18% 0.012 250);
+  --muted:   oklch(54% 0.012 250);
+  --border:  oklch(92% 0.005 250);
+  --accent:  oklch(58% 0.18 255);
+  --accent-subtle: oklch(from var(--accent) 0.95 0.04 255);
+  --accent-glow:   oklch(from var(--accent) 0.65 0.12 255);
+  --green:   oklch(55% 0.14 145);
+  --rose:    oklch(55% 0.14 10);
+  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+  --font-body:    -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, monospace;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; }
+body {
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--fg);
+  background: var(--bg);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+a { color: inherit; text-decoration: none; }
+
+/* Back link */
+.auth-back {
+  position: fixed;
+  top: 24px;
+  left: 24px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--muted);
+  transition: color 0.15s;
+}
+.auth-back:hover { color: var(--fg); }
+
+/* ===== CARD ===== */
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 40px 36px;
+}
+.auth-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+.auth-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+  margin-bottom: 16px;
+}
+.auth-logo-mark {
+  width: 34px;
+  height: 34px;
+  background: var(--accent);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 17px;
+  font-weight: 700;
+}
+.auth-header h1 {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  margin-bottom: 4px;
+}
+.auth-header p {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+/* ===== TABS ===== */
+.auth-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 28px;
+}
+.auth-tab {
+  flex: 1;
+  text-align: center;
+  padding: 12px 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: var(--font-body);
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+}
+.auth-tab:hover { color: var(--fg); }
+.auth-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.auth-form-container { }
+.auth-form { display: none; flex-direction: column; gap: 20px; }
+.auth-form.active { display: flex; }
+
+/* ===== FORM ===== */
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group label {
+  font-size: 13px;
+  font-weight: 550;
+  color: var(--fg);
+}
+.form-group input {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  font-family: var(--font-body);
+  color: var(--fg);
+  background: var(--surface);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.form-group input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px oklch(from var(--accent) 0.9 0.04 255);
+}
+.form-group input::placeholder { color: var(--muted); }
+.form-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+.form-row label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  cursor: pointer;
+}
+.form-row label input[type="checkbox"] {
+  accent-color: var(--accent);
+}
+.form-row a {
+  color: var(--accent);
+  font-weight: 500;
+}
+.form-row a:hover { text-decoration: underline; }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 28px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 550;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  letter-spacing: -0.01em;
+  width: 100%;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-glow); }
+.btn-outline {
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--border);
+}
+.btn-outline:hover { border-color: var(--accent); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ===== DIVIDER ===== */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.auth-divider::before, .auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ===== SOCIAL ===== */
+.social-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+.social-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fg);
+}
+.social-btn:hover { border-color: var(--accent); }
+
+/* ===== FOOTER TEXT ===== */
+.auth-footer {
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 24px;
+}
+.auth-footer a {
+  color: var(--accent);
+  font-weight: 500;
+}
+.auth-footer a:hover { text-decoration: underline; }
+
+/* ===== SUCCESS STATE ===== */
+.success-state {
+  display: none;
+  text-align: center;
+  padding: 40px 0;
+}
+.success-state.show { display: block; }
+.success-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+.success-state h2 {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 650;
+  margin-bottom: 8px;
+}
+.success-state p {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* ===== PASSWORD TOGGLE ===== */
+.password-wrapper {
+  position: relative;
+}
+.password-wrapper input { width: 100%; }
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 14px;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px;
+}
+
+@media (max-width: 480px) {
+  .auth-card { padding: 28px 20px; }
+  body { padding: 16px; justify-content: flex-start; padding-top: 60px; }
+  .auth-back { top: 16px; left: 16px; }
+  .social-btns { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<a href="index.html" class="auth-back">← 返回首页</a>
+
+<div class="auth-card">
+  <div class="auth-header">
+    <div class="auth-logo">
+      <span class="auth-logo-mark">宁</span>
+      小宁学习
+    </div>
+    <h1>欢迎回来</h1>
+    <p>登录后继续你的编程学习之旅</p>
+  </div>
+
+  <!-- Tabs -->
+  <div class="auth-tabs">
+    <button class="auth-tab active" data-form="login">登录</button>
+    <button class="auth-tab" data-form="register">注册</button>
+  </div>
+
+  <!-- ===== LOGIN FORM ===== -->
+  <div class="auth-form-container">
+    <div class="auth-form active" id="form-login">
+      <div class="form-group">
+        <label>邮箱地址</label>
+        <input type="email" placeholder="your@email.com" id="loginEmail">
+      </div>
+      <div class="form-group">
+        <label>密码</label>
+        <div class="password-wrapper">
+          <input type="password" placeholder="••••••••" id="loginPassword">
+          <button class="password-toggle" onclick="togglePwd('loginPassword',this)" type="button">👁</button>
+        </div>
+      </div>
+      <div class="form-row">
+        <label><input type="checkbox" checked> 记住我</label>
+        <a href="#">忘记密码？</a>
+      </div>
+      <button class="btn btn-primary" onclick="handleLogin()">登 录</button>
+
+      <div class="auth-divider">或使用以下方式登录</div>
+
+      <div class="social-btns">
+        <div class="social-btn" onclick="socialLogin('微信')">💬 微信</div>
+        <div class="social-btn" onclick="socialLogin('GitHub')">🐙 GitHub</div>
+        <div class="social-btn" onclick="socialLogin('Google')">🔍 Google</div>
+      </div>
+    </div>
+
+    <!-- ===== REGISTER FORM ===== -->
+    <div class="auth-form" id="form-register">
+      <div class="form-group">
+        <label>昵称</label>
+        <input type="text" placeholder="你的名字" id="regName">
+      </div>
+      <div class="form-group">
+        <label>邮箱地址</label>
+        <input type="email" placeholder="your@email.com" id="regEmail">
+      </div>
+      <div class="form-group">
+        <label>密码</label>
+        <div class="password-wrapper">
+          <input type="password" placeholder="至少 8 位字符" id="regPassword">
+          <button class="password-toggle" onclick="togglePwd('regPassword',this)" type="button">👁</button>
+        </div>
+      </div>
+      <div class="form-row">
+        <label><input type="checkbox"> 我已阅读并同意《用户协议》</label>
+      </div>
+      <button class="btn btn-primary" onclick="handleRegister()">免费注册</button>
+
+      <div class="auth-divider">或使用以下方式注册</div>
+
+      <div class="social-btns">
+        <div class="social-btn" onclick="socialLogin('微信')">💬 微信</div>
+        <div class="social-btn" onclick="socialLogin('GitHub')">🐙 GitHub</div>
+        <div class="social-btn" onclick="socialLogin('Google')">🔍 Google</div>
+      </div>
+    </div>
+
+    <!-- ===== SUCCESS STATE ===== -->
+    <div class="success-state" id="successState">
+      <div class="success-icon">🎉</div>
+      <h2 id="successTitle">欢迎回来！</h2>
+      <p id="successDesc">正在跳转到你的学习主页……</p>
+    </div>
+  </div>
+
+  <div class="auth-footer">
+    还没有账号？<a href="#" onclick="switchTab('register');return false;">立即注册</a>
+  </div>
+</div>
+
+<script>
+function togglePwd(inputId, btn) {
+  const input = document.getElementById(inputId);
+  input.type = input.type === 'password' ? 'text' : 'password';
+  btn.textContent = input.type === 'password' ? '👁' : '👁‍🗨';
+}
+
+// Tab switching
+document.querySelectorAll('.auth-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('form-' + tab.dataset.form).classList.add('active');
+
+    // Update header
+    const header = document.querySelector('.auth-header h1');
+    const sub = document.querySelector('.auth-header p');
+    if (tab.dataset.form === 'login') {
+      header.textContent = '欢迎回来';
+      sub.textContent = '登录后继续你的编程学习之旅';
+    } else {
+      header.textContent = '开始学习';
+      sub.textContent = '注册即开启你的编程学习之旅，全程免费试学';
+    }
+  });
+});
+
+function switchTab(name) {
+  const tab = document.querySelector(`.auth-tab[data-form="${name}"]`);
+  if (tab) tab.click();
+}
+
+function handleLogin() {
+  const email = document.getElementById('loginEmail').value;
+  if (!email) { alert('请输入邮箱地址'); return; }
+  showSuccess('🎉 欢迎回来！', `正在为你跳转，${email}……`);
+}
+
+function handleRegister() {
+  const name = document.getElementById('regName').value;
+  if (!name) { alert('请输入昵称'); return; }
+  showSuccess('🎉 注册成功！', `${name}，欢迎加入小宁学习，你的编程之旅开始了！`);
+}
+
+function socialLogin(provider) {
+  showSuccess('🔗 正在连接', `正在通过 ${provider} 进行身份验证……`);
+}
+
+function showSuccess(title, desc) {
+  document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+  document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('successState').classList.add('show');
+  document.getElementById('successTitle').textContent = title;
+  document.getElementById('successDesc').textContent = desc;
+}
+</script>
+
+</body>
+</html>
