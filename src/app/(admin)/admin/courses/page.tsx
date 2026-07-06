@@ -74,17 +74,24 @@ export default function AdminCoursesPage() {
       description: courseDesc,
     };
     await db.saveCourse(updated);
-    alert('课程基础信息保存成功！');
+    window.showToast?.('课程基础信息保存成功！');
     loadCourses();
     setEditingCourse(updated);
   };
 
   const handleDeleteCourse = async (id: string) => {
-    if (confirm('确定要删除这门课程吗？所有关联课时都将被清空。')) {
+    if (window.showConfirm) {
+      window.showConfirm('确定要删除这门课程吗？所有关联课时都将被清空。', async () => {
+        await db.deleteCourse(id);
+        if (editingCourse?.id === id) {
+          setEditingCourse(null);
+        }
+        loadCourses();
+        window.showToast?.('课程已成功删除');
+      });
+    } else {
       await db.deleteCourse(id);
-      if (editingCourse?.id === id) {
-        setEditingCourse(null);
-      }
+      if (editingCourse?.id === id) setEditingCourse(null);
       loadCourses();
     }
   };
@@ -101,7 +108,7 @@ export default function AdminCoursesPage() {
   const handleSaveLesson = async () => {
     if (!editingCourse) return;
     if (!lessonTitle) {
-      alert('请输入课时名称');
+      window.showToast?.('请输入课时名称', 'error');
       return;
     }
 
@@ -117,7 +124,7 @@ export default function AdminCoursesPage() {
     };
 
     await db.saveLesson(lessonData);
-    alert(selectedLessonId ? '课时编辑成功！' : '课时添加成功！');
+    window.showToast?.(selectedLessonId ? '课时编辑成功！' : '课时添加成功！');
     resetLessonForm();
     const l = await db.getLessons(editingCourse.id);
     setEditingLessons(l);
@@ -133,7 +140,17 @@ export default function AdminCoursesPage() {
   };
 
   const handleDeleteLesson = async (id: string) => {
-    if (confirm('确定要删除这节课时吗？')) {
+    if (window.showConfirm) {
+      window.showConfirm('确定要删除这节课时吗？', async () => {
+        await db.deleteLesson(id);
+        if (editingCourse) {
+          const l = await db.getLessons(editingCourse.id);
+          setEditingLessons(l);
+        }
+        resetLessonForm();
+        window.showToast?.('课时已成功删除');
+      });
+    } else {
       await db.deleteLesson(id);
       if (editingCourse) {
         const l = await db.getLessons(editingCourse.id);

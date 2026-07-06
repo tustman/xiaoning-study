@@ -607,5 +607,55 @@ export const db = {
       return updated;
     }
     return null;
+  },
+
+  async getUsers(): Promise<UserProfile[]> {
+    if (supabase) {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (!error && data) return data as UserProfile[];
+      console.warn('Supabase fetch users failed, falling back to mock:', error);
+    }
+    const defaultUsersList: UserProfile[] = [
+      {
+        id: 'mock-user-123',
+        email: 'student@example.com',
+        nickname: '王小宁',
+        role: 'admin',
+        created_at: new Date().toISOString()
+      },
+      {
+        id: 'mock-user-456',
+        email: 'test@example.com',
+        nickname: '张三',
+        role: 'user',
+        created_at: new Date().toISOString()
+      }
+    ];
+    return getStorageItem<UserProfile[]>('mockUsersList', defaultUsersList);
+  },
+
+  async updateUserRole(userId: string, role: 'user' | 'admin'): Promise<UserProfile | null> {
+    const activeClient = supabaseAdmin || supabase;
+    if (activeClient) {
+      const { data, error } = await activeClient
+        .from('users')
+        .update({ role })
+        .eq('id', userId)
+        .select()
+        .maybeSingle();
+      if (!error && data) return data as UserProfile;
+      console.error('Supabase update user role failed:', error);
+    }
+    const list = getStorageItem<UserProfile[]>('mockUsersList', []);
+    const index = list.findIndex(u => u.id === userId);
+    if (index >= 0) {
+      list[index].role = role;
+      setStorageItem('mockUsersList', list);
+      return list[index];
+    }
+    return null;
   }
 };

@@ -38,14 +38,19 @@ export default function AdminOrdersPage() {
   }, [searchQuery, orders]);
 
   const handleManualComplete = async (tradeNo: string) => {
-    if (confirm(`您确定要为订单 ${tradeNo} 执行「手动补单」操作吗？该操作将直接把订单标记为「已完成」并开通课程权限。`)) {
+    if (window.showConfirm) {
+      window.showConfirm(`您确定要为订单 ${tradeNo} 执行「手动补单」操作吗？该操作将直接把订单标记为「已完成」并开通课程权限。`, async () => {
+        const result = await db.updateOrderStatus(tradeNo, 'completed');
+        if (result) {
+          window.showToast?.('补单操作成功，课程权限已开通！');
+          loadOrders();
+        } else {
+          window.showToast?.('补单失败，请检查订单是否存在。', 'error');
+        }
+      });
+    } else {
       const result = await db.updateOrderStatus(tradeNo, 'completed');
-      if (result) {
-        alert('补单操作成功，课程权限已开通！');
-        loadOrders();
-      } else {
-        alert('补单失败，请检查订单是否存在。');
-      }
+      if (result) loadOrders();
     }
   };
 

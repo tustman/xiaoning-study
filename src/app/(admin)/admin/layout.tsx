@@ -4,7 +4,14 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { db, UserProfile } from '@/lib/db';
-import { Shield, BookOpen, Receipt, Home, ShieldAlert, ChevronRight, User } from 'lucide-react';
+import { Shield, BookOpen, Receipt, Home, ShieldAlert, ChevronRight, User, Users } from 'lucide-react';
+
+declare global {
+  interface Window {
+    showToast?: (message: string, type?: 'success' | 'error') => void;
+    showConfirm?: (message: string, onConfirm: () => void) => void;
+  }
+}
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -62,7 +69,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="min-h-screen flex bg-[#f8f9fa]">
+    <div className="min-h-screen flex bg-[#f8f9fa] relative">
       {/* Sidebar Navigation */}
       <aside className="hidden md:flex flex-col w-64 border-r border-slate-200/80 bg-white p-4">
         <div className="flex items-center gap-2 px-3 py-4 border-b border-slate-100 mb-6">
@@ -73,6 +80,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
 
         <nav className="flex-1 flex flex-col gap-1.5">
+          <Link
+            id="admin-users-nav"
+            href="/admin/users"
+            className={`flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all ${
+              pathname.includes('/admin/users')
+                ? 'bg-slate-900 text-white shadow-md'
+                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <Users className="h-4 w-4" />
+              用户与注册管理
+            </div>
+            <ChevronRight className="h-3 w-3 opacity-60" />
+          </Link>
+
           <Link
             id="admin-courses-nav"
             href="/admin/courses"
@@ -133,6 +156,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           
           <div className="flex gap-2">
             <Link
+              href="/admin/users"
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-bold ${
+                pathname.includes('/admin/users') ? 'bg-slate-900 text-white' : 'text-slate-500 bg-slate-50'
+              }`}
+            >
+              用户
+            </Link>
+            <Link
               href="/admin/courses"
               className={`px-3 py-1.5 rounded-lg text-[10px] font-bold ${
                 pathname.includes('/admin/courses') ? 'bg-slate-900 text-white' : 'text-slate-500 bg-slate-50'
@@ -159,6 +190,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {children}
         </main>
       </div>
+
     </div>
   );
 }
