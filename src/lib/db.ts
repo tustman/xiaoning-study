@@ -490,7 +490,7 @@ export const db = {
     return getAuthState();
   },
 
-  async signUpWithEmail(email: string, password: string, role: 'user' | 'admin' = 'user'): Promise<{ user: UserProfile | null; error: string | null }> {
+  async signUpWithEmail(email: string, password: string, role: 'user' | 'admin' = 'user'): Promise<{ user: UserProfile | null; requiresVerification: boolean; error: string | null }> {
     if (supabase) {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -502,7 +502,11 @@ export const db = {
           }
         }
       });
-      if (error) return { user: null, error: error.message };
+      if (error) return { user: null, requiresVerification: false, error: error.message };
+      
+      // If email confirmation is enabled, Supabase does not return a session
+      const requiresVerification = data.user !== null && data.session === null;
+      
       if (data.user) {
         const profile: UserProfile = {
           id: data.user.id,
@@ -511,12 +515,19 @@ export const db = {
           role: role,
           created_at: data.user.created_at
         };
-        saveAuthState(profile);
-        return { user: profile, error: null };
+        
+        if (!requiresVerification) {
+          saveAuthState(profile);
+          return { user: profile, requiresVerification: false, error: null };
+        } else {
+          // Explicitly clear local auth state, user must confirm email first
+          saveAuthState(null);
+          return { user: null, requiresVerification: true, error: null };
+        }
       }
     }
     const mockUser = this.signIn(email, role);
-    return { user: mockUser, error: null };
+    return { user: mockUser, requiresVerification: false, error: null };
   },
 
   async signInWithEmail(email: string, password: string): Promise<{ user: UserProfile | null; error: string | null }> {

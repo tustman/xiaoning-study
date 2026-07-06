@@ -48,11 +48,16 @@ export default function Home() {
           window.location.reload();
         }
       } else {
-        const { user, error } = await db.signUpWithEmail(authEmail, authPassword, authRole);
+        const { user, requiresVerification, error } = await db.signUpWithEmail(authEmail, authPassword, authRole);
         if (error) {
           setAuthError(error);
+        } else if (requiresVerification) {
+          alert('注册成功！确认邮件已发送至您的邮箱，请点击邮件中的链接激活账号后再进行登录。');
+          setShowAuthModal(false);
+          setAuthEmail('');
+          setAuthPassword('');
         } else {
-          alert('注册成功并登录！部分邮箱需要验证后才能持久生效。');
+          alert('注册成功并登录！');
           setCurrentUser(user);
           setShowAuthModal(false);
           window.location.reload();
