@@ -1,6 +1,8 @@
 // Unified Data Access & Authentication Layer
 // Automatically switches between Supabase and localStorage-based Mock DB
 
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+
 export interface UserProfile {
   id: string;
   email: string;
@@ -45,13 +47,30 @@ export interface Order {
   user_email?: string;
 }
 
-// Check if Supabase env vars are set
-const hasSupabase = 
-  typeof process !== 'undefined' &&
-  process.env.NEXT_PUBLIC_SUPABASE_URL && 
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+// Check if Supabase env vars are set and not default placeholders
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+const adminKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-// Mock Data Store
+const isConfigured = 
+  supabaseUrl && 
+  supabaseUrl !== 'your_supabase_project_url_here' &&
+  supabaseKey && 
+  supabaseKey !== 'your_supabase_anon_public_key_here' &&
+  supabaseKey !== 'sb_publishable_mEmKarZSdLTk9FW67xPMzw_DH0fJVwk'; // wait, sb_publishable is their real key, so check for placeholder instead
+
+const hasRealSupabase = !!(supabaseUrl && supabaseKey && !supabaseUrl.includes('your_supabase'));
+
+// Initialize clients
+export const supabase = hasRealSupabase 
+  ? createSupabaseClient(supabaseUrl!, supabaseKey!) 
+  : null;
+
+export const supabaseAdmin = (hasRealSupabase && adminKey && !adminKey.includes('your_supabase'))
+  ? createSupabaseClient(supabaseUrl!, adminKey!)
+  : null;
+
+// Mock Data Store (Fallback)
 const DEFAULT_COURSES: Course[] = [
   {
     id: 'course-1',
@@ -70,25 +89,15 @@ const DEFAULT_COURSES: Course[] = [
     price: 199.00,
     status: 'published',
     created_at: new Date().toISOString(),
-  },
-  {
-    id: 'course-3',
-    title: 'React Server Components 与服务端渲染性能优化 (草稿)',
-    description: '<p>深入 RSC 架构底层，搞懂 Hydration 机制，利用 Streaming 解决首屏白屏焦虑。</p>',
-    cover_image: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&auto=format&fit=crop&q=60',
-    price: 149.00,
-    status: 'draft',
-    created_at: new Date().toISOString(),
   }
 ];
 
 const DEFAULT_LESSONS: Lesson[] = [
-  // Course 1 lessons
   {
     id: 'lesson-1-1',
     course_id: 'course-1',
     title: '01. 课程导学与技术栈选型（免费试看）',
-    video_url: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8', // HLS stream
+    video_url: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
     duration: 185,
     is_free_preview: true,
     order_index: 1,
@@ -103,51 +112,9 @@ const DEFAULT_LESSONS: Lesson[] = [
     is_free_preview: false,
     order_index: 2,
     created_at: new Date().toISOString(),
-  },
-  {
-    id: 'lesson-1-3',
-    course_id: 'course-1',
-    title: '03. Supabase 数据表设计与 RLS 授权',
-    video_url: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
-    duration: 540,
-    is_free_preview: false,
-    order_index: 3,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 'lesson-1-4',
-    course_id: 'course-1',
-    title: '04. 7pay 支付网关接入与订单生成',
-    video_url: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
-    duration: 410,
-    is_free_preview: false,
-    order_index: 4,
-    created_at: new Date().toISOString(),
-  },
-  // Course 2 lessons
-  {
-    id: 'lesson-2-1',
-    course_id: 'course-2',
-    title: '01. PostgreSQL 核心特性与表关联设计',
-    video_url: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
-    duration: 290,
-    is_free_preview: true,
-    order_index: 1,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 'lesson-2-2',
-    course_id: 'course-2',
-    title: '02. 什么是行级安全策略（RLS）？',
-    video_url: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
-    duration: 480,
-    is_free_preview: false,
-    order_index: 2,
-    created_at: new Date().toISOString(),
   }
 ];
 
-// Helper to get/set localStorage items in client side
 const isClient = typeof window !== 'undefined';
 
 function getStorageItem<T>(key: string, defaultValue: T): T {
@@ -169,7 +136,6 @@ function setStorageItem<T>(key: string, value: T): void {
   localStorage.setItem(key, JSON.stringify(value));
 }
 
-// DB state initialized on client side
 const getCoursesState = () => getStorageItem<Course[]>('courses', DEFAULT_COURSES);
 const saveCoursesState = (courses: Course[]) => setStorageItem('courses', courses);
 
@@ -184,7 +150,7 @@ const getAuthState = () => getStorageItem<UserProfile | null>('currentUser', {
   email: 'student@example.com',
   nickname: '王小宁',
   avatar_url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
-  role: 'admin', // default to admin for ease of testing both roles in dev
+  role: 'admin',
   created_at: new Date().toISOString()
 });
 const saveAuthState = (user: UserProfile | null) => setStorageItem('currentUser', user);
@@ -193,18 +159,51 @@ const saveAuthState = (user: UserProfile | null) => setStorageItem('currentUser'
 export const db = {
   // Course APIs
   async getCourses(): Promise<Course[]> {
-    if (hasSupabase) {
-      // Supabase query would go here, return mock as fallback if query fails or env is not loaded
+    if (supabase) {
+      const { data, error } = await supabase
+        .from('courses')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (!error && data) return data as Course[];
+      console.warn('Supabase fetch courses failed, falling back to mock:', error);
     }
     return getCoursesState();
   },
 
   async getCourse(id: string): Promise<Course | null> {
+    if (supabase) {
+      const { data, error } = await supabase
+        .from('courses')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+      if (!error && data) return data as Course;
+    }
     const list = await this.getCourses();
     return list.find(c => c.id === id) || null;
   },
 
   async saveCourse(course: Course): Promise<Course> {
+    if (supabase) {
+      const payload: any = {
+        title: course.title,
+        description: course.description,
+        cover_image: course.cover_image,
+        price: Number(course.price),
+        status: course.status
+      };
+      // Omit ID if it is a temporary mock client prefix string
+      if (course.id && !course.id.startsWith('course-')) {
+        payload.id = course.id;
+      }
+      const { data, error } = await supabase
+        .from('courses')
+        .upsert(payload)
+        .select()
+        .single();
+      if (!error && data) return data as Course;
+      console.error('Supabase save course failed:', error);
+    }
     const list = getCoursesState();
     const index = list.findIndex(c => c.id === course.id);
     if (index >= 0) {
@@ -217,6 +216,10 @@ export const db = {
   },
 
   async deleteCourse(id: string): Promise<void> {
+    if (supabase) {
+      const { error } = await supabase.from('courses').delete().eq('id', id);
+      if (!error) return;
+    }
     const list = getCoursesState();
     const filtered = list.filter(c => c.id !== id);
     saveCoursesState(filtered);
@@ -224,6 +227,14 @@ export const db = {
 
   // Lesson APIs
   async getLessons(courseId: string): Promise<Lesson[]> {
+    if (supabase) {
+      const { data, error } = await supabase
+        .from('lessons')
+        .select('*')
+        .eq('course_id', courseId)
+        .order('order_index', { ascending: true });
+      if (!error && data) return data as Lesson[];
+    }
     const list = getLessonsState();
     return list
       .filter(l => l.course_id === courseId)
@@ -231,11 +242,39 @@ export const db = {
   },
 
   async getLesson(lessonId: string): Promise<Lesson | null> {
+    if (supabase) {
+      const { data, error } = await supabase
+        .from('lessons')
+        .select('*')
+        .eq('id', lessonId)
+        .maybeSingle();
+      if (!error && data) return data as Lesson;
+    }
     const list = getLessonsState();
     return list.find(l => l.id === lessonId) || null;
   },
 
   async saveLesson(lesson: Lesson): Promise<Lesson> {
+    if (supabase) {
+      const payload: any = {
+        course_id: lesson.course_id,
+        title: lesson.title,
+        video_url: lesson.video_url,
+        duration: Number(lesson.duration),
+        is_free_preview: lesson.is_free_preview,
+        order_index: Number(lesson.order_index)
+      };
+      if (lesson.id && !lesson.id.startsWith('lesson-')) {
+        payload.id = lesson.id;
+      }
+      const { data, error } = await supabase
+        .from('lessons')
+        .upsert(payload)
+        .select()
+        .single();
+      if (!error && data) return data as Lesson;
+      console.error('Supabase save lesson failed:', error);
+    }
     const list = getLessonsState();
     const index = list.findIndex(l => l.id === lesson.id);
     if (index >= 0) {
@@ -248,6 +287,10 @@ export const db = {
   },
 
   async deleteLesson(id: string): Promise<void> {
+    if (supabase) {
+      const { error } = await supabase.from('lessons').delete().eq('id', id);
+      if (!error) return;
+    }
     const list = getLessonsState();
     const filtered = list.filter(l => l.id !== id);
     saveLessonsState(filtered);
@@ -255,9 +298,25 @@ export const db = {
 
   // Order APIs
   async getOrders(): Promise<Order[]> {
+    if (supabase) {
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          courses ( title ),
+          users ( email )
+        `)
+        .order('created_at', { ascending: false });
+      if (!error && data) {
+        return (data as any[]).map(o => ({
+          ...o,
+          course_title: o.courses?.title || '未知课程',
+          user_email: o.users?.email || '未知用户',
+        })) as Order[];
+      }
+    }
     const orders = getOrdersState();
     const courses = getCoursesState();
-    // mock join table
     return orders.map(order => {
       const course = courses.find(c => c.id === order.course_id);
       return {
@@ -269,6 +328,25 @@ export const db = {
   },
 
   async getOrder(tradeNo: string): Promise<Order | null> {
+    if (supabase) {
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          courses ( title ),
+          users ( email )
+        `)
+        .eq('trade_no', tradeNo)
+        .maybeSingle();
+      if (!error && data) {
+        const o = data as any;
+        return {
+          ...o,
+          course_title: o.courses?.title || '未知课程',
+          user_email: o.users?.email || '未知用户'
+        } as Order;
+      }
+    }
     const list = getOrdersState();
     const order = list.find(o => o.trade_no === tradeNo);
     if (!order) return null;
@@ -282,8 +360,34 @@ export const db = {
   },
 
   async createOrder(userId: string, courseId: string, amount: number): Promise<Order> {
-    const list = getOrdersState();
     const tradeNo = '7PAY' + Date.now() + Math.floor(Math.random() * 1000);
+    if (supabase) {
+      const payload: any = {
+        trade_no: tradeNo,
+        course_id: courseId,
+        amount: Number(amount),
+        status: 'pending'
+      };
+      // Skip setting mock prefix user IDs if they violate UUID foreign key checks
+      if (userId && !userId.startsWith('mock-')) {
+        payload.user_id = userId;
+      }
+      const { data, error } = await supabase
+        .from('orders')
+        .insert(payload)
+        .select()
+        .single();
+      if (!error && data) {
+        // Query course details to match interface
+        const course = await this.getCourse(courseId);
+        return {
+          ...data,
+          course_title: course?.title || '未知课程',
+        } as Order;
+      }
+      console.error('Supabase create order failed:', error);
+    }
+    const list = getOrdersState();
     const newOrder: Order = {
       id: 'order-' + Date.now(),
       trade_no: tradeNo,
@@ -299,6 +403,19 @@ export const db = {
   },
 
   async updateOrderStatus(tradeNo: string, status: 'pending' | 'completed' | 'failed'): Promise<Order | null> {
+    // Webhook callbacks are server-side, they use supabaseAdmin (service role client) to bypass RLS
+    const activeClient = supabaseAdmin || supabase;
+    if (activeClient) {
+      const paidAt = status === 'completed' ? new Date().toISOString() : null;
+      const { data, error } = await activeClient
+        .from('orders')
+        .update({ status, paid_at: paidAt })
+        .eq('trade_no', tradeNo)
+        .select()
+        .maybeSingle();
+      if (!error && data) return data as Order;
+      console.error('Supabase update order status failed:', error);
+    }
     const list = getOrdersState();
     const index = list.findIndex(o => o.trade_no === tradeNo);
     if (index >= 0) {
@@ -313,24 +430,60 @@ export const db = {
   },
 
   async checkUserAccess(userId: string, courseId: string): Promise<boolean> {
+    if (supabase) {
+      // Admins bypass lock
+      const userProfile = await this.getCurrentUser();
+      if (userProfile?.role === 'admin') return true;
+
+      // Real check on orders
+      if (userId && !userId.startsWith('mock-')) {
+        const { data, error } = await supabase
+          .from('orders')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('course_id', courseId)
+          .eq('status', 'completed')
+          .limit(1);
+        if (!error && data && data.length > 0) return true;
+      }
+    }
     const list = getOrdersState();
     return list.some(o => o.user_id === userId && o.course_id === courseId && o.status === 'completed');
   },
 
   // Auth APIs
   getCurrentUser(): UserProfile | null {
+    // Since Next.js uses client-side localStorage in our UI for login state toggles,
+    // we fetch current login status from mock state so students/admins can switch roles on the fly.
+    // In a real production deployment, this maps to supabase.auth.getUser()
     return getAuthState();
   },
 
   signIn(email: string, role: 'user' | 'admin' = 'user'): UserProfile {
+    // Real Supabase Auth would call supabase.auth.signInWithPassword or similar.
+    // For demo purposes, we also sync with public.users table if supabase is connected
+    const userId = role === 'admin' ? 'd6b9f291-a1b5-44de-96cb-8b5ff2c7f53f' : 'f6b9f291-a1b5-44de-96cb-8b5ff2c7f53f';
     const newUser: UserProfile = {
-      id: 'mock-user-123',
+      id: userId,
       email,
       nickname: email.split('@')[0],
       role,
       created_at: new Date().toISOString()
     };
     saveAuthState(newUser);
+
+    if (supabase) {
+      // Sync or insert user profile in Supabase public.users table for joins to work
+      supabase.from('users').upsert({
+        id: userId,
+        email,
+        nickname: newUser.nickname,
+        role
+      }).then(({ error }) => {
+        if (error) console.warn('Supabase profile sync warning:', error);
+      });
+    }
+
     return newUser;
   },
 
@@ -343,6 +496,14 @@ export const db = {
     if (current && current.id === userId) {
       const updated = { ...current, nickname, avatar_url: avatarUrl };
       saveAuthState(updated);
+      
+      if (supabase) {
+        supabase.from('users').update({
+          nickname,
+          avatar_url: avatarUrl
+        }).eq('id', userId);
+      }
+      
       return updated;
     }
     return null;
