@@ -48,7 +48,7 @@ export default function Home() {
           window.location.reload();
         }
       } else {
-        const { user, requiresVerification, error } = await db.signUpWithEmail(authEmail, authPassword, authRole);
+        const { user, requiresVerification, error } = await db.signUpWithEmail(authEmail, authPassword, 'user');
         if (error) {
           setAuthError(error);
         } else if (requiresVerification) {
@@ -288,24 +288,6 @@ export default function Home() {
                   className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-slate-800"
                 />
               </div>
-
-              {/* Optional Role Switcher on Registration (For Demo Convenience) */}
-              {authMode === 'register' && (
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1">
-                    <Shield className="h-3 w-3" />
-                    注册角色 (测试用)
-                  </label>
-                  <select
-                    value={authRole}
-                    onChange={(e) => setAuthRole(e.target.value as any)}
-                    className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-slate-800"
-                  >
-                    <option value="user">普通学生 (需付费解锁)</option>
-                    <option value="admin">系统管理员 (直通管理后台)</option>
-                  </select>
-                </div>
-              )}
 
               {/* Action Buttons */}
               <button
