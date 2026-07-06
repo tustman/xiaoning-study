@@ -143,15 +143,13 @@ export default function Home() {
   return (
     <div className="flex-1 flex flex-col bg-[#fafbfe] text-[#1e293b] min-h-screen pb-24 relative overflow-x-hidden">
       
-      {/* Decorative Floating Mesh Gradients */}
-      <div className="absolute top-[-10%] left-[-15%] w-[600px] h-[600px] bg-blue-400/8 blur-[130px] rounded-full pointer-events-none -z-10"></div>
-      <div className="absolute top-[25%] right-[-10%] w-[700px] h-[700px] bg-purple-400/8 blur-[140px] rounded-full pointer-events-none -z-10 animate-pulse-slow"></div>
-      <div className="absolute bottom-[10%] left-[-5%] w-[600px] h-[600px] bg-pink-400/6 blur-[130px] rounded-full pointer-events-none -z-10"></div>
+      {/* Dot Matrix Background Pattern */}
+      <div className="absolute inset-0 -z-10 h-full w-full bg-grid-pattern pointer-events-none"></div>
 
       {/* Sticky Header with Frosted Glass Effect */}
       <header className="sticky top-0 z-40 w-full glass-panel border-b border-slate-200/40 px-6 py-3.5 sm:px-12 flex items-center justify-between shadow-xs">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-extrabold text-base shadow-lg shadow-blue-500/20">
+          <div className="w-9 h-9 rounded-2xl bg-slate-900 flex items-center justify-center text-white font-extrabold text-sm shadow-md shadow-slate-900/10">
             宁
           </div>
           <div className="flex flex-col">
@@ -224,13 +222,13 @@ export default function Home() {
         {/* Dot Matrix Background Pattern */}
         <div className="absolute inset-0 -z-10 h-full w-full bg-grid-pattern pointer-events-none"></div>
         
-        <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[10px] font-black tracking-wider uppercase bg-blue-50/80 border border-blue-100/50 text-blue-600 shadow-xs">
+        <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[10px] font-black tracking-wider uppercase bg-slate-100 border border-slate-200/60 text-slate-650 shadow-xs">
           <Sparkles className="h-3.5 w-3.5" />
           零基础智能开发课程 · 即学即用
         </div>
 
         <h1 className="mt-6 text-4xl sm:text-7xl font-black tracking-tight leading-[1.1] text-slate-900">
-          零基础 <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">AI 编程</span>实战教程
+          零基础 <span className="text-blue-600">AI 编程</span>实战教程
         </h1>
         
         <p className="mt-6 text-xs sm:text-sm text-slate-500 max-w-2xl mx-auto leading-relaxed font-bold">
@@ -241,7 +239,7 @@ export default function Home() {
         <div className="flex flex-col sm:flex-row gap-4.5 justify-center mt-10">
           <a
             href="#courses"
-            className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl text-xs font-black bg-blue-600 hover:bg-blue-700 text-white transition-all active:scale-95 shadow-lg shadow-blue-500/25"
+            className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl text-xs font-black bg-blue-600 hover:bg-blue-700 text-white transition-all active:scale-95 shadow-md shadow-blue-500/10"
           >
             开始解锁课程
             <ArrowRight className="h-4 w-4" />
@@ -276,8 +274,8 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Video Bezel Mockup Container with glowing light shadow */}
-        <div className="mt-16 max-w-4xl mx-auto rounded-3xl overflow-hidden border border-slate-200/70 shadow-[0_30px_70px_rgba(59,130,246,0.12)] bg-slate-900 aspect-[16/9] relative group cursor-pointer">
+        {/* Video Bezel Mockup Container with clean light shadow */}
+        <div className="mt-16 max-w-4xl mx-auto rounded-3xl overflow-hidden border border-slate-200/70 shadow-2xl shadow-slate-200/80 bg-slate-900 aspect-[16/9] relative group cursor-pointer">
           <img 
             src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1600&auto=format&fit=crop&q=80" 
             alt="Hero course mockup"
@@ -285,7 +283,7 @@ export default function Home() {
           />
           <div className="absolute inset-0 flex items-center justify-center bg-black/15 group-hover:bg-black/30 transition-all">
             <div className="w-24 h-24 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 transition-transform group-hover:scale-105 duration-75">
-              <div className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-2xl shadow-blue-500/50">
+              <div className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-2xl shadow-blue-500/20">
                 <Play className="h-6 w-6 fill-current ml-1" />
               </div>
             </div>
