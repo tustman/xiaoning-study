@@ -33,6 +33,24 @@ export default function Home() {
     loadData();
   }, []);
 
+  const translateAuthError = (err: string): string => {
+    if (!err) return '';
+    const errMsg = err.toLowerCase();
+    if (errMsg.includes('email not confirmed')) {
+      return '邮箱尚未激活，请先前往您的邮箱点击确认链接完成验证。';
+    }
+    if (errMsg.includes('invalid login credentials') || errMsg.includes('invalid credentials')) {
+      return '邮箱或密码不正确，请确认后重新输入。';
+    }
+    if (errMsg.includes('user already exists')) {
+      return '该邮箱地址已被注册，请切换至登录面板进行登录。';
+    }
+    if (errMsg.includes('password should be at least')) {
+      return '密码安全度不足，长度至少需要 6 位字符。';
+    }
+    return err;
+  };
+
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError('');
@@ -42,7 +60,7 @@ export default function Home() {
       if (authMode === 'login') {
         const { user, error } = await db.signInWithEmail(authEmail, authPassword);
         if (error) {
-          setAuthError(error);
+          setAuthError(translateAuthError(error));
         } else {
           setCurrentUser(user);
           setShowAuthModal(false);
@@ -51,7 +69,7 @@ export default function Home() {
       } else {
         const { user, requiresVerification, error } = await db.signUpWithEmail(authEmail, authPassword, 'user');
         if (error) {
-          setAuthError(error);
+          setAuthError(translateAuthError(error));
         } else if (requiresVerification) {
           setAuthSuccess('注册成功！验证邮件已发送。请前往您的电子邮箱点击激活链接，完成验证后即可在此处登录。');
           setAuthEmail('');
@@ -63,7 +81,7 @@ export default function Home() {
         }
       }
     } catch (err: any) {
-      setAuthError(err.message || '操作失败，请重试');
+      setAuthError(translateAuthError(err.message || '操作失败，请重试'));
     } finally {
       setAuthLoading(false);
     }
