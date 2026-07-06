@@ -17,6 +17,7 @@ export default function Home() {
   const [authPassword, setAuthPassword] = useState('');
   const [authRole, setAuthRole] = useState<'user' | 'admin'>('user');
   const [authError, setAuthError] = useState('');
+  const [authSuccess, setAuthSuccess] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
 
   useEffect(() => {
@@ -52,12 +53,10 @@ export default function Home() {
         if (error) {
           setAuthError(error);
         } else if (requiresVerification) {
-          alert('注册成功！确认邮件已发送至您的邮箱，请点击邮件中的链接激活账号后再进行登录。');
-          setShowAuthModal(false);
+          setAuthSuccess('注册成功！验证邮件已发送。请前往您的电子邮箱点击激活链接，完成验证后即可在此处登录。');
           setAuthEmail('');
           setAuthPassword('');
         } else {
-          alert('注册成功并登录！');
           setCurrentUser(user);
           setShowAuthModal(false);
           window.location.reload();
@@ -71,11 +70,9 @@ export default function Home() {
   };
 
   const handleSignOut = async () => {
-    if (confirm('确定要退出登录吗？')) {
-      await db.signOut();
-      setCurrentUser(null);
-      window.location.reload();
-    }
+    await db.signOut();
+    setCurrentUser(null);
+    window.location.reload();
   };
 
   if (loading) {
@@ -135,6 +132,7 @@ export default function Home() {
               id="open-auth-modal-btn"
               onClick={() => {
                 setAuthError('');
+                setAuthSuccess('');
                 setShowAuthModal(true);
               }}
               className="px-4 py-1.5 rounded-full text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 transition-all active:scale-95 cursor-pointer shadow-xs"
@@ -254,6 +252,12 @@ export default function Home() {
               {authError && (
                 <div className="p-3 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 text-xs font-semibold leading-relaxed">
                   ⚠️ {authError}
+                </div>
+              )}
+
+              {authSuccess && (
+                <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 text-xs font-semibold leading-relaxed animate-pulse">
+                  ✓ {authSuccess}
                 </div>
               )}
 
