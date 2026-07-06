@@ -453,15 +453,102 @@ export const db = {
 
   // Auth APIs
   getCurrentUser(): UserProfile | null {
-    // Since Next.js uses client-side localStorage in our UI for login state toggles,
-    // we fetch current login status from mock state so students/admins can switch roles on the fly.
-    // In a real production deployment, this maps to supabase.auth.getUser()
     return getAuthState();
   },
 
+  async syncSessionUserProfile(): Promise<UserProfile | null> {
+    if (supabase) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profile } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', user.id)
+            .maybeSingle();
+          
+          if (profile) {
+            saveAuthState(profile as UserProfile);
+            return profile as UserProfile;
+          } else {
+            const fallbackProfile: UserProfile = {
+              id: user.id,
+              email: user.email || '',
+              nickname: user.user_metadata?.nickname || user.email?.split('@')[0] || '学员',
+              role: (user.user_metadata?.role as any) || 'user',
+              avatar_url: user.user_metadata?.avatar_url,
+              created_at: user.created_at
+            };
+            saveAuthState(fallbackProfile);
+            return fallbackProfile;
+          }
+        }
+      } catch (err) {
+        console.error('Session sync error:', err);
+      }
+    }
+    return getAuthState();
+  },
+
+  async signUpWithEmail(email: string, password: string, role: 'user' | 'admin' = 'user'): Promise<{ user: UserProfile | null; error: string | null }> {
+    if (supabase) {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            nickname: email.split('@')[0],
+            role: role
+          }
+        }
+      });
+      if (error) return { user: null, error: error.message };
+      if (data.user) {
+        const profile: UserProfile = {
+          id: data.user.id,
+          email: data.user.email || '',
+          nickname: email.split('@')[0],
+          role: role,
+          created_at: data.user.created_at
+        };
+        saveAuthState(profile);
+        return { user: profile, error: null };
+      }
+    }
+    const mockUser = this.signIn(email, role);
+    return { user: mockUser, error: null };
+  },
+
+  async signInWithEmail(email: string, password: string): Promise<{ user: UserProfile | null; error: string | null }> {
+    if (supabase) {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      if (error) return { user: null, error: error.message };
+      if (data.user) {
+        const { data: profile } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', data.user.id)
+          .maybeSingle();
+        
+        const userProfile: UserProfile = profile ? (profile as UserProfile) : {
+          id: data.user.id,
+          email: data.user.email || '',
+          nickname: data.user.user_metadata?.nickname || email.split('@')[0],
+          role: (data.user.user_metadata?.role as any) || 'user',
+          created_at: data.user.created_at
+        };
+        saveAuthState(userProfile);
+        return { user: userProfile, error: null };
+      }
+    }
+    const mockUser = this.signIn(email, 'user');
+    return { user: mockUser, error: null };
+  },
+
   signIn(email: string, role: 'user' | 'admin' = 'user'): UserProfile {
-    // Real Supabase Auth would call supabase.auth.signInWithPassword or similar.
-    // For demo purposes, we also sync with public.users table if supabase is connected
     const userId = role === 'admin' ? 'd6b9f291-a1b5-44de-96cb-8b5ff2c7f53f' : 'f6b9f291-a1b5-44de-96cb-8b5ff2c7f53f';
     const newUser: UserProfile = {
       id: userId,
@@ -473,7 +560,6 @@ export const db = {
     saveAuthState(newUser);
 
     if (supabase) {
-      // Sync or insert user profile in Supabase public.users table for joins to work
       supabase.from('users').upsert({
         id: userId,
         email,
@@ -487,7 +573,10 @@ export const db = {
     return newUser;
   },
 
-  signOut(): void {
+  async signOut(): Promise<void> {
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
     saveAuthState(null);
   },
 
