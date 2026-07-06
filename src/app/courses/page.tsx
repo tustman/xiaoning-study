@@ -132,18 +132,18 @@ export default function CoursesPage() {
       {/* ===== NAVIGATION ===== */}
       <nav className="sticky top-0 z-45 backdrop-blur-md border-b border-[var(--border)] bg-white/80">
         <div className="max-w-[1200px] mx-auto px-6 flex items-center justify-between h-16">
-          <Link href="/" className="flex items-center gap-2.5 font-bold text-lg text-[var(--fg)] tracking-tight">
-            <span className="w-8 h-8 bg-[var(--accent)] rounded-lg flex items-center justify-center text-white text-base font-extrabold shadow-sm">
+          <Link href="/" className="flex items-center gap-2.5 font-semibold text-[20px] text-[var(--fg)] tracking-tight">
+            <span className="w-8 h-8 bg-[var(--accent)] rounded-lg flex items-center justify-center text-white text-[16px] font-bold shadow-sm">
               宁
             </span>
             小宁学习
           </Link>
           
-          <div className="hidden md:flex items-center gap-1 font-semibold text-xs text-[var(--muted)]">
+          <div className="hidden md:flex items-center gap-1 font-medium text-sm text-[var(--muted)]">
             <Link href="/" className="px-4 py-2 rounded-md hover:text-[var(--fg)] hover:bg-[var(--border)]">
               首页
             </Link>
-            <Link href="/courses" className="px-4 py-2 rounded-md hover:text-[var(--fg)] hover:bg-[var(--border)] text-[var(--accent)] font-bold">
+            <Link href="/courses" className="px-4 py-2 rounded-md hover:text-[var(--fg)] hover:bg-[var(--border)] text-[var(--accent)] font-semibold">
               课程
             </Link>
             {currentUser && (
@@ -159,19 +159,19 @@ export default function CoursesPage() {
                 {currentUser.role === 'admin' && (
                   <Link 
                     href="/admin/courses" 
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-extrabold bg-blue-50 border border-blue-100 text-blue-600 hover:bg-blue-100 transition-all"
+                    className="flex items-center gap-1 px-3.5 py-2 rounded-lg text-[12px] font-bold bg-blue-50 border border-blue-100 text-blue-600 hover:bg-blue-100 transition-all"
                   >
                     管理后台
                   </Link>
                 )}
                 
-                <div className="flex items-center gap-2 text-[11px] bg-slate-100/80 border border-[var(--border)] rounded-lg px-3 py-1.5">
-                  <span className="font-bold text-[var(--fg)] truncate max-w-[80px]">
+                <div className="flex items-center gap-2 text-[13px] bg-slate-100/80 border border-[var(--border)] rounded-lg px-3.5 py-2">
+                  <span className="font-semibold text-[var(--fg)] truncate max-w-[80px]">
                     {currentUser.nickname}
                   </span>
                   <button
                     onClick={handleSignOut}
-                    className="ml-1 text-slate-400 hover:text-rose-500 font-bold transition-all cursor-pointer"
+                    className="ml-1 text-slate-400 hover:text-rose-500 font-semibold transition-all cursor-pointer"
                   >
                     退出
                   </button>
@@ -186,7 +186,7 @@ export default function CoursesPage() {
                     setAuthSuccess('');
                     setShowAuthModal(true);
                   }}
-                  className="btn btn-ghost px-4 py-2 text-[13px] font-bold"
+                  className="btn btn-ghost px-5 py-2 text-sm font-semibold"
                 >
                   登录
                 </button>
@@ -197,7 +197,7 @@ export default function CoursesPage() {
                     setAuthSuccess('');
                     setShowAuthModal(true);
                   }}
-                  className="btn btn-primary px-4 py-2 text-[13px] font-bold"
+                  className="btn btn-primary px-5 py-2 text-sm font-semibold"
                 >
                   免费注册
                 </button>
@@ -209,8 +209,8 @@ export default function CoursesPage() {
 
       {/* ===== PAGE HEADER ===== */}
       <div className="max-w-[1200px] mx-auto w-full px-6 py-12">
-        <h1 className="text-3xl font-extrabold tracking-tight text-[var(--fg)]">全部课程</h1>
-        <p className="text-sm text-[var(--muted)] mt-1.5">找到适合你当前水平的课程，从入门到精通，系统化学习编程。</p>
+        <h1 className="text-[28px] sm:text-[38px] font-bold tracking-tight text-[var(--fg)]">全部课程</h1>
+        <p className="text-base text-[var(--muted)] mt-1.5">找到适合你当前水平的课程，从入门到精通，系统化学习编程。</p>
       </div>
 
       {/* ===== COURSES GRID ===== */}
@@ -235,16 +235,16 @@ export default function CoursesPage() {
                     <img 
                       src={course.cover_image} 
                       alt={course.title}
-                      className="w-full h-full object-cover"
+                      className="absolute inset-0 w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full bg-[oklch(from_var(--accent)_0.94_0.03_255)] flex items-center justify-center text-4xl">
+                    <div className="absolute inset-0 w-full h-full bg-[oklch(from_var(--accent)_0.94_0.03_255)] flex items-center justify-center text-4xl">
                       宁
                     </div>
                   )}
                   
                   {/* Level Tag */}
-                  <span className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase ${
+                  <span className={`absolute top-3 left-3 z-10 px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wider uppercase ${
                     levelInfo.label === '入门' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100/50' : 
                     levelInfo.label === '进阶' ? 'bg-amber-50 text-amber-600 border border-amber-100/50' : 
                     'bg-rose-50 text-rose-600 border border-rose-100/50'
@@ -252,7 +252,7 @@ export default function CoursesPage() {
                     {levelInfo.label}
                   </span>
 
-                  <span className="w-11 h-11 rounded-full bg-white/95 flex items-center justify-center text-[var(--accent)] text-xs shadow-md shadow-black/5 opacity-0 hover:opacity-100 hover:scale-105 transition-all">
+                  <span className="absolute z-10 w-11 h-11 rounded-full bg-white/95 flex items-center justify-center text-[var(--accent)] text-xs shadow-md shadow-black/5 opacity-0 hover:opacity-100 hover:scale-105 transition-all">
                     ▶
                   </span>
                 </div>
@@ -260,16 +260,16 @@ export default function CoursesPage() {
                 {/* Course Card Body */}
                 <div className="p-5 flex-1 flex flex-col justify-between">
                   <div>
-                    <h3 className="font-bold text-base text-[var(--fg)] leading-snug line-clamp-1 mb-1.5">
+                    <h3 className="font-semibold text-[17px] text-[var(--fg)] leading-snug line-clamp-1 mb-1.5">
                       {course.title}
                     </h3>
                     <div 
-                      className="text-xs text-[var(--muted)] leading-relaxed line-clamp-2 mb-3.5"
+                      className="text-[13px] text-[var(--muted)] leading-relaxed line-clamp-2 mb-3.5"
                       dangerouslySetInnerHTML={{ __html: course.description }}
                     />
                     
                     {/* Meta Row */}
-                    <div className="flex items-center gap-4 text-[11px] text-[var(--muted)] font-semibold">
+                    <div className="flex items-center gap-4 text-[12px] text-[var(--muted)] font-medium">
                       <span>📹 {course.lessons.length} 课时</span>
                       <span>⏱ {Math.ceil(course.lessons.reduce((acc, curr) => acc + curr.duration, 0) / 3600)} 小时</span>
                       <span className="flex items-center gap-0.5"><Star className="h-3 w-3 fill-amber-400 stroke-amber-400" /> 4.9</span>
@@ -278,13 +278,13 @@ export default function CoursesPage() {
 
                   {/* Card Footer */}
                   <div className="border-t border-[var(--border)] mt-4.5 pt-4 flex items-center justify-between">
-                    <span className="flex items-center gap-2 text-xs text-[var(--muted)] font-semibold">
-                      <span className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center font-bold text-[10px] text-slate-500">
+                    <span className="flex items-center gap-2 text-[13px] text-[var(--muted)] font-medium">
+                      <span className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center font-bold text-[11px] text-slate-500">
                         小
                       </span>
                       小宁老师
                     </span>
-                    <span className={`font-bold text-[13px] ${priceVal === 0 ? 'text-emerald-600' : 'text-[var(--accent)]'}`}>
+                    <span className={`font-semibold text-[15px] ${priceVal === 0 ? 'text-emerald-600' : 'text-[var(--accent)]'}`}>
                       {priceVal === 0 ? '免费' : `¥${priceVal.toFixed(2)}`}
                     </span>
                   </div>
@@ -297,7 +297,7 @@ export default function CoursesPage() {
           {courses.length === 0 && (
             <div className="col-span-full py-16 text-center bg-white rounded-3xl border border-[var(--border)]">
               <BookOpen className="h-8 w-8 text-slate-300 mx-auto mb-3" />
-              <p className="text-slate-400 text-xs font-bold">暂无上架课程，敬请期待。</p>
+              <p className="text-slate-400 text-sm font-semibold">暂无上架课程，敬请期待。</p>
             </div>
           )}
         </div>

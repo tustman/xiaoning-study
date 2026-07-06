@@ -115,21 +115,21 @@ export default function ProfilePage() {
       {/* ===== NAVIGATION ===== */}
       <nav className="sticky top-0 z-45 backdrop-blur-md border-b border-[var(--border)] bg-white/80">
         <div className="max-w-[1200px] mx-auto px-6 flex items-center justify-between h-16">
-          <Link href="/" className="flex items-center gap-2.5 font-bold text-lg text-[var(--fg)] tracking-tight">
-            <span className="w-8 h-8 bg-[var(--accent)] rounded-lg flex items-center justify-center text-white text-base font-extrabold shadow-sm">
+          <Link href="/" className="flex items-center gap-2.5 font-semibold text-[20px] text-[var(--fg)] tracking-tight">
+            <span className="w-8 h-8 bg-[var(--accent)] rounded-lg flex items-center justify-center text-white text-[16px] font-bold shadow-sm">
               宁
             </span>
             小宁学习
           </Link>
           
-          <div className="hidden md:flex items-center gap-1 font-semibold text-xs text-[var(--muted)]">
+          <div className="hidden md:flex items-center gap-1 font-medium text-sm text-[var(--muted)]">
             <Link href="/" className="px-4 py-2 rounded-md hover:text-[var(--fg)] hover:bg-[var(--border)]">
               首页
             </Link>
             <Link href="/courses" className="px-4 py-2 rounded-md hover:text-[var(--fg)] hover:bg-[var(--border)]">
               课程
             </Link>
-            <Link href="/profile" className="px-4 py-2 rounded-md hover:text-[var(--fg)] hover:bg-[var(--border)] text-[var(--accent)] font-bold">
+            <Link href="/profile" className="px-4 py-2 rounded-md hover:text-[var(--fg)] hover:bg-[var(--border)] text-[var(--accent)] font-semibold">
               我的学习
             </Link>
           </div>
@@ -139,19 +139,19 @@ export default function ProfilePage() {
               {currentUser.role === 'admin' && (
                 <Link 
                   href="/admin/courses" 
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-extrabold bg-blue-50 border border-blue-100 text-blue-600 hover:bg-blue-100 transition-all"
+                  className="flex items-center gap-1 px-3.5 py-2 rounded-lg text-[12px] font-bold bg-blue-50 border border-blue-100 text-blue-600 hover:bg-blue-100 transition-all"
                 >
                   管理后台
                 </Link>
               )}
               
-              <div className="flex items-center gap-2 text-[11px] bg-slate-100/80 border border-[var(--border)] rounded-lg px-3 py-1.5">
-                <span className="font-bold text-[var(--fg)] truncate max-w-[80px]">
+              <div className="flex items-center gap-2 text-[13px] bg-slate-100/80 border border-[var(--border)] rounded-lg px-3.5 py-2">
+                <span className="font-semibold text-[var(--fg)] truncate max-w-[80px]">
                   {currentUser.nickname}
                 </span>
                 <button
                   onClick={handleSignOut}
-                  className="ml-1 text-slate-400 hover:text-rose-500 font-bold transition-all cursor-pointer"
+                  className="ml-1 text-slate-400 hover:text-rose-500 font-semibold transition-all cursor-pointer"
                 >
                   退出
                 </button>
@@ -163,10 +163,10 @@ export default function ProfilePage() {
 
       {/* ===== PAGE HEADER ===== */}
       <div className="max-w-[1200px] mx-auto w-full px-6 py-12 flex items-center gap-4">
-        <span className="w-11 h-11 rounded-full bg-[var(--accent)] flex items-center justify-center text-white text-base font-extrabold shadow-sm">
+        <span className="w-11 h-11 rounded-full bg-[var(--accent)] flex items-center justify-center text-white text-lg font-semibold shadow-sm">
           {currentUser.nickname.slice(0, 1).toUpperCase()}
         </span>
-        <h1 className="text-2xl font-bold tracking-tight text-[var(--fg)]">我的课程</h1>
+        <h1 className="text-[24px] font-semibold tracking-tight text-[var(--fg)]">我的课程</h1>
       </div>
 
       {/* ===== STUDY CONTENT ===== */}
@@ -175,8 +175,8 @@ export default function ProfilePage() {
         {/* 进行中的课程 */}
         <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-lg)] mb-8 overflow-hidden">
           <div className="flex justify-between items-center px-7 py-5 border-b border-[var(--border)]">
-            <h2 className="font-bold text-sm text-[var(--fg)]">进行中的课程</h2>
-            <Link href="/courses" className="text-xs text-[var(--accent)] font-semibold hover:underline">
+            <h2 className="font-semibold text-[17px] text-[var(--fg)]">进行中的课程</h2>
+            <Link href="/courses" className="text-[13px] text-[var(--accent)] font-medium hover:underline">
               继续选课 →
             </Link>
           </div>
@@ -192,22 +192,22 @@ export default function ProfilePage() {
                   📚
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-bold text-[var(--fg)] mb-1 truncate">{course.title}</h3>
-                  <p className="text-[11px] text-[var(--muted)] font-semibold">
+                  <h3 className="text-[15px] font-semibold text-[var(--fg)] mb-1 truncate">{course.title}</h3>
+                  <p className="text-[12px] text-[var(--muted)] font-medium">
                     已学 {course.watchedCount}/{course.lessons.length} 课时
                   </p>
                   <div className="w-full bg-[var(--border)] h-1 rounded-full mt-2 overflow-hidden">
                     <div className="bg-[var(--accent)] h-full rounded-full transition-all" style={{ width: `${course.progressPercent}%` }}></div>
                   </div>
                 </div>
-                <span className="font-mono text-xs font-bold text-[var(--muted)] min-w-[36px] text-right">
+                <span className="font-mono text-[13px] font-medium text-[var(--muted)] min-w-[36px] text-right">
                   {course.progressPercent}%
                 </span>
               </div>
             ))}
 
             {inProgressCourses.length === 0 && (
-              <div className="py-12 text-center text-xs text-[var(--muted)] font-semibold">
+              <div className="py-12 text-center text-sm text-[var(--muted)] font-medium">
                 当前没有正在学习中的课程，去选课吧。
               </div>
             )}
@@ -217,7 +217,7 @@ export default function ProfilePage() {
         {/* 已完成的课程 */}
         <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-lg)] overflow-hidden">
           <div className="px-7 py-5 border-b border-[var(--border)]">
-            <h2 className="font-bold text-sm text-[var(--fg)]">已完成的课程</h2>
+            <h2 className="font-semibold text-[17px] text-[var(--fg)]">已完成的课程</h2>
           </div>
 
           <div className="flex flex-col">
@@ -231,19 +231,19 @@ export default function ProfilePage() {
                   🎓
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-bold text-[var(--fg)] mb-1 truncate">{course.title}</h3>
-                  <p className="text-[11px] text-[var(--muted)] font-semibold">
+                  <h3 className="text-[15px] font-semibold text-[var(--fg)] mb-1 truncate">{course.title}</h3>
+                  <p className="text-[12px] text-[var(--muted)] font-medium">
                     {course.lessons.length} 个课时已全部学完
                   </p>
                 </div>
-                <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
+                <span className="text-[13px] font-semibold text-emerald-600 flex items-center gap-1">
                   <CheckCircle className="h-3.5 w-3.5" /> 100%
                 </span>
               </div>
             ))}
 
             {completedCourses.length === 0 && (
-              <div className="py-12 text-center text-xs text-[var(--muted)] font-semibold">
+              <div className="py-12 text-center text-sm text-[var(--muted)] font-medium">
                 暂无已完成的课程，加油！
               </div>
             )}
