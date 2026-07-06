@@ -57,9 +57,9 @@ export default function AdminCoursesPage() {
       status: 'draft',
       created_at: new Date().toISOString()
     };
-    db.saveCourse(newCourse).then(() => {
+    db.saveCourse(newCourse).then((savedCourse) => {
       loadCourses();
-      handleEditCourseClick(newCourse);
+      handleEditCourseClick(savedCourse);
     });
   };
 
@@ -73,10 +73,10 @@ export default function AdminCoursesPage() {
       status: courseStatus,
       description: courseDesc,
     };
-    await db.saveCourse(updated);
+    const saved = await db.saveCourse(updated);
     window.showToast?.('课程基础信息保存成功！');
     loadCourses();
-    setEditingCourse(updated);
+    setEditingCourse(saved);
   };
 
   const handleDeleteCourse = async (id: string) => {
