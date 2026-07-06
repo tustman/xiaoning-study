@@ -2,11 +2,18 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { db, Course, UserProfile } from '@/lib/db';
-import { BookOpen, Shield, Play, GraduationCap, User, LogOut, Key, Mail, Sparkles, X } from 'lucide-react';
+import { db, Course, Lesson, UserProfile } from '@/lib/db';
+import { 
+  BookOpen, Shield, Play, GraduationCap, User, LogOut, Key, Mail, Sparkles, 
+  X, Check, ArrowRight, Laptop, HelpCircle, UserCheck, ShieldAlert 
+} from 'lucide-react';
+
+interface ExtendedCourse extends Course {
+  lessons: Lesson[];
+}
 
 export default function Home() {
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [courses, setCourses] = useState<ExtendedCourse[]>([]);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -15,15 +22,28 @@ export default function Home() {
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
-  const [authRole, setAuthRole] = useState<'user' | 'admin'>('user');
   const [authError, setAuthError] = useState('');
   const [authSuccess, setAuthSuccess] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
 
+  // FAQ Accordion State
+  const [activeFaq, setActiveFaq] = useState<number | null>(null);
+
   useEffect(() => {
     async function loadData() {
       const allCourses = await db.getCourses();
-      setCourses(allCourses.filter(c => c.status === 'published'));
+      const published = allCourses.filter(c => c.status === 'published');
+      
+      // Load lessons for each course to show syllabus on landing page
+      const coursesWithLessons: ExtendedCourse[] = [];
+      for (const course of published) {
+        const lessons = await db.getLessons(course.id);
+        coursesWithLessons.push({
+          ...course,
+          lessons: lessons.sort((a, b) => a.order_index - b.order_index)
+        });
+      }
+      setCourses(coursesWithLessons);
       
       // Sync real Supabase session
       const activeUser = await db.syncSessionUserProfile();
@@ -54,6 +74,7 @@ export default function Home() {
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError('');
+    setAuthSuccess('');
     setAuthLoading(true);
 
     try {
@@ -97,42 +118,71 @@ export default function Home() {
     return (
       <div className="flex-1 flex flex-col items-center justify-center min-h-screen bg-[#f8f9fa]">
         <div className="w-10 h-10 border-2 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
-        <p className="mt-4 text-slate-500 text-xs">正在加载中...</p>
+        <p className="mt-4 text-slate-500 text-xs font-semibold">正在加载学堂...</p>
       </div>
     );
   }
 
+  const faqs = [
+    {
+      q: '没有任何编程基础可以学吗？',
+      a: '完全可以。本课程是专门面向零基础编程新手的。我们将使用 AI 编程辅助工具 Cursor 配合 Claude 模型，您不需要手写复杂的底层语法，只要用大白话（自然语言）向 AI 描述需求，就能在 AI 的帮助下轻松构建出实用的应用项目。'
+    },
+    {
+      q: '购买课程后，我可以享受到哪些服务？',
+      a: '购买课程后，您将立刻解锁该课程名下所有的课时视频播放权限，获得配套的源码、规则配置文件 rules，并可加入专属交流群与讲师及几千名独立开发者直接沟通。'
+    },
+    {
+      q: '什么是 7pay 支付？如何进行模拟支付？',
+      a: '本站集成了 7pay 收银台接口，为确保您的资金安全，当前处于沙箱调试模式。点击课程底部的“开始学习”或“立即解锁”，会引导您跳转到收银台，您可直接使用我们提供的内置模拟工具进行“一键完成支付”，无需真正花钱即可完整模拟整个交易授权闭环。'
+    },
+    {
+      q: '课程内容是持续更新的吗？',
+      a: '是的。AI 工具迭代日新月异，我们会根据 Cursor、Claude 等前沿工具的最新升级，不断录制并添加最新的开发案例和实用干货。已购用户均享有永久免费的更新迭代观看权。'
+    }
+  ];
+
   return (
-    <div className="flex-1 flex flex-col bg-[#f8f9fa] text-[#1e293b] min-h-screen pb-24 relative">
-      {/* Top Header */}
-      <header className="sticky top-0 z-40 w-full glass-panel border-b border-slate-200/50 backdrop-blur-md px-4 py-3 sm:px-6 flex items-center justify-between">
+    <div className="flex-1 flex flex-col bg-white text-slate-900 min-h-screen pb-24 relative overflow-x-hidden">
+      
+      {/* Sticky Header */}
+      <header className="sticky top-0 z-40 w-full bg-white/80 backdrop-blur-md border-b border-slate-100 px-4 py-3 sm:px-8 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <GraduationCap className="h-6 w-6 text-slate-800" />
-          <span className="font-extrabold text-lg tracking-wider bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
-            小宁学堂
+          <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-extrabold text-sm shadow-md shadow-blue-500/20">
+            宁
+          </div>
+          <span className="font-extrabold text-base tracking-tight text-slate-900">
+            小宁 AI 学堂
           </span>
         </div>
 
+        <nav className="hidden md:flex gap-8 text-xs font-bold text-slate-500">
+          <a href="#" className="hover:text-blue-600 transition-colors">首页</a>
+          <a href="#courses" className="hover:text-blue-600 transition-colors">精选课程</a>
+          <a href="#author" className="hover:text-blue-600 transition-colors">关于讲师</a>
+          <a href="#faq" className="hover:text-blue-600 transition-colors">常见问题</a>
+        </nav>
+
         <div className="flex items-center gap-3">
           {currentUser ? (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
               {currentUser.role === 'admin' && (
                 <Link 
                   id="admin-dashboard-link"
                   href="/admin/courses" 
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-blue-500/10 border border-blue-500/20 text-blue-600 hover:bg-blue-500/20 transition-all"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-extrabold bg-blue-50 border border-blue-100 text-blue-600 hover:bg-blue-100 transition-all"
                 >
                   <Shield className="h-3 w-3" />
                   管理后台
                 </Link>
               )}
               
-              <div className="flex items-center gap-2 text-xs bg-slate-100 border border-slate-200/80 rounded-full px-3 py-1.5">
-                <User className="h-3.5 w-3.5 text-slate-500" />
-                <span className="font-bold text-slate-700 truncate max-w-[80px]">
+              <div className="flex items-center gap-2 text-[10px] bg-slate-50 border border-slate-200/50 rounded-full px-3 py-1.5">
+                <User className="h-3 w-3 text-slate-500" />
+                <span className="font-extrabold text-slate-700 truncate max-w-[80px]">
                   {currentUser.nickname}
                 </span>
-                <span className="text-[9px] px-1 bg-slate-200 rounded font-bold text-slate-500">
+                <span className="text-[9px] px-1 bg-slate-200/60 rounded font-bold text-slate-500">
                   {currentUser.role === 'admin' ? '管理员' : '学员'}
                 </span>
                 <button
@@ -153,7 +203,7 @@ export default function Home() {
                 setAuthSuccess('');
                 setShowAuthModal(true);
               }}
-              className="px-4 py-1.5 rounded-full text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 transition-all active:scale-95 cursor-pointer shadow-xs"
+              className="px-4 py-1.5 rounded-full text-xs font-extrabold bg-slate-900 text-white hover:bg-slate-800 transition-all active:scale-95 cursor-pointer shadow-xs"
             >
               登录 / 注册
             </button>
@@ -161,86 +211,227 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Hero Banner */}
-      <section className="relative px-4 py-12 sm:px-8 text-center max-w-4xl mx-auto mt-6">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-blue-500/5 blur-3xl rounded-full -z-10 pointer-events-none animate-pulse-slow"></div>
-        <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-slate-200/50 border border-slate-300/30 text-slate-600">
-          🚀 Next.js 15 & Supabase 真实邮箱鉴权集成
-        </span>
-        <h1 className="mt-4 text-3xl sm:text-5xl font-black tracking-tight leading-tight bg-gradient-to-b from-slate-900 to-slate-700 bg-clip-text text-transparent">
-          怎么方便，怎么学
+      {/* Hero Banner Section */}
+      <section className="relative px-4 py-16 sm:py-24 text-center max-w-5xl mx-auto w-full">
+        {/* Grid Background Pattern */}
+        <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-grid-pattern pointer-events-none"></div>
+        
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold bg-blue-50 border border-blue-100 text-blue-600 animate-pulse">
+          <Sparkles className="h-3 w-3" />
+          零基础也能用 AI 做出第一个能赚钱的项目
+        </div>
+
+        <h1 className="mt-6 text-4xl sm:text-6xl font-black tracking-tight leading-tight text-slate-900">
+          零基础 AI 编程实战教程
         </h1>
-        <p className="mt-3 text-xs sm:text-sm text-slate-500 max-w-xl mx-auto leading-relaxed">
-          小宁学堂为您精心打造精品移动端课程，支持 HLS 视频防盗鉴权、7pay 支付极速闭环，以及全套管理后台。
+        
+        <p className="mt-4 text-xs sm:text-sm text-slate-500 max-w-2xl mx-auto leading-relaxed font-medium">
+          以 <strong>Cursor + Claude Code</strong> 实战为主，面向编程新手的 AI 编程课程。
+          通过几十个实战案例，手把手带你开发出属于自己的网站、小程序、浏览器插件、App 以及 AI Agent。
+          让你零基础也能用 AI 做出第一个应用！
+        </p>
+
+        <div className="flex flex-col sm:flex-row gap-3 justify-center mt-8">
+          <a
+            href="#courses"
+            className="inline-flex items-center justify-center gap-1.5 px-8 py-3 rounded-full text-xs font-extrabold bg-blue-600 hover:bg-blue-700 text-white transition-all active:scale-95 shadow-md shadow-blue-500/20"
+          >
+            立即开始学习
+            <ArrowRight className="h-3.5 w-3.5" />
+          </a>
+          <a
+            href="#faq"
+            className="inline-flex items-center justify-center px-8 py-3 rounded-full text-xs font-extrabold border border-slate-200 hover:bg-slate-50 text-slate-600 transition-all bg-white"
+          >
+            常见问题解答
+          </a>
+        </div>
+
+        {/* Checklist Features */}
+        <div className="flex items-center justify-center flex-wrap gap-5 mt-8 text-[11px] text-slate-500 font-bold">
+          <div className="flex items-center gap-1">
+            <Check className="h-4 w-4 text-blue-600" />
+            <span>3000+ 学员已加入</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Check className="h-4 w-4 text-blue-600" />
+            <span>精选实战项目案例</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Check className="h-4 w-4 text-blue-600" />
+            <span>零基础友好保姆级</span>
+          </div>
+        </div>
+
+        {/* Video Placeholder Box */}
+        <div className="mt-12 max-w-4xl mx-auto rounded-2xl overflow-hidden border border-slate-200/80 shadow-2xl bg-slate-50 aspect-[16/9] relative group cursor-pointer">
+          <img 
+            src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1600&auto=format&fit=crop&q=80" 
+            alt="Hero course mockup"
+            className="w-full h-full object-cover group-hover:scale-101 transition-all duration-700 brightness-[0.95]"
+          />
+          <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/35 transition-all">
+            <div className="w-20 h-20 rounded-full bg-blue-600/10 backdrop-blur-md flex items-center justify-center">
+              <div className="w-14 h-14 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-xl shadow-blue-500/30 group-hover:scale-110 transition-all">
+                <Play className="h-6 w-6 fill-current ml-1" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Courses Grid List */}
+      <section id="courses" className="py-16 px-4 bg-slate-50 border-y border-slate-100">
+        <div className="max-w-5xl mx-auto w-full">
+          <div className="text-center mb-12">
+            <span className="px-3 py-1 rounded-full text-[10px] font-extrabold bg-blue-50 border border-blue-100 text-blue-600">
+              精品专栏
+            </span>
+            <h2 className="text-2xl font-black text-slate-900 mt-3">课程内容精选</h2>
+            <p className="text-xs text-slate-400 mt-1">精心设计的课程体系，带你由浅入深搞定 AI 开发商业化</p>
+          </div>
+
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            {courses.map((course) => (
+              <div key={course.id} className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden flex flex-col justify-between hover:shadow-md transition-all hover:-translate-y-0.5">
+                
+                {/* Card Header Cover */}
+                <div className="relative aspect-[16/9] bg-slate-100 border-b border-slate-100">
+                  <img 
+                    src={course.cover_image} 
+                    alt={course.title}
+                    className="w-full h-full object-cover"
+                  />
+                  <span className="absolute top-3 right-3 px-2 py-0.5 text-[9px] font-extrabold bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-md">
+                    持续更新中
+                  </span>
+                </div>
+
+                {/* Content Area */}
+                <div className="p-5 flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="font-extrabold text-sm text-slate-800 line-clamp-1">
+                      {course.title}
+                    </h3>
+                    <div 
+                      className="text-xs text-slate-500 mt-2 line-clamp-2 prose"
+                      dangerouslySetInnerHTML={{ __html: course.description }}
+                    />
+
+                    {/* Syllabus Lesson List */}
+                    <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col gap-2">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                        课程目录
+                      </p>
+                      {course.lessons.slice(0, 3).map((lesson) => (
+                        <Link 
+                          key={lesson.id}
+                          href={`/courses/${course.id}?lessonId=${lesson.id}`}
+                          className="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-100 hover:border-blue-200 hover:bg-blue-50/20 text-[11px] text-slate-600 hover:text-blue-600 font-bold transition-all"
+                        >
+                          <span className="truncate max-w-[150px]">{lesson.title}</span>
+                          {lesson.is_free_preview ? (
+                            <span className="text-[9px] px-1 bg-emerald-50 text-emerald-600 rounded">试听</span>
+                          ) : (
+                            <Play className="h-2.5 w-2.5 text-slate-400" />
+                          )}
+                        </Link>
+                      ))}
+                      {course.lessons.length > 3 && (
+                        <p className="text-[10px] text-slate-400 font-bold text-center mt-1">
+                          查看其余 {course.lessons.length - 3} 个课时...
+                        </p>
+                      )}
+                      {course.lessons.length === 0 && (
+                        <p className="text-[10px] text-slate-400 italic">暂无课时录入</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mt-6 pt-4 border-t border-slate-150 flex items-center justify-between">
+                    <div>
+                      <span className="block text-[8px] text-slate-400 font-bold uppercase">会员解锁价</span>
+                      <span className="text-sm font-black text-slate-800">¥ {Number(course.price).toFixed(2)}</span>
+                    </div>
+
+                    <Link
+                      id={`view-course-${course.id}`}
+                      href={`/courses/${course.id}`}
+                      className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all active:scale-95 shadow-sm shadow-slate-900/10"
+                    >
+                      开始学习
+                    </Link>
+                  </div>
+                </div>
+
+              </div>
+            ))}
+
+            {courses.length === 0 && (
+              <div className="col-span-full py-16 text-center bg-white rounded-2xl border border-slate-200/80">
+                <BookOpen className="h-8 w-8 text-slate-300 mx-auto mb-3" />
+                <p className="text-slate-400 text-xs font-bold">暂无上架课程，请以管理员账号登录并在后台添加。</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Instructor Section */}
+      <section id="author" className="py-16 px-4 max-w-4xl mx-auto w-full text-center">
+        <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-slate-200 mx-auto shadow-md">
+          <img 
+            src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80" 
+            alt="Instructor avatar"
+            className="w-full h-full object-cover"
+          />
+        </div>
+        <h2 className="text-xl font-black text-slate-900 mt-4">我是讲师：小宁老师</h2>
+        <p className="text-xs text-blue-600 font-bold mt-1">全栈独立开发者 / AI 商业化顾问</p>
+        <p className="text-xs text-slate-500 max-w-xl mx-auto mt-3 leading-relaxed">
+          致力于向懂中文的非技术开发者普及低门槛的 AI 全栈开发方案。
+          通过真实的国内/国外支付打通、HLS 视频防盗加密等商业项目落地实战案例，手把手带你通过 AI 工具开发属于自己的出海 SaaS 平台与小程序应用，赚取你的第一份独立开发收入！
         </p>
       </section>
 
-      {/* Course List Catalog */}
-      <main className="px-4 max-w-xl sm:max-w-4xl mx-auto w-full mt-6 flex-1">
-        <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
-          <BookOpen className="h-4 w-4" />
-          精品推荐
-        </h2>
+      {/* FAQ Accordion Section */}
+      <section id="faq" className="py-16 px-4 bg-slate-50 border-t border-slate-100">
+        <div className="max-w-3xl mx-auto w-full">
+          <div className="text-center mb-10">
+            <span className="px-3 py-1 rounded-full text-[10px] font-extrabold bg-blue-50 border border-blue-100 text-blue-600">
+              常见解答
+            </span>
+            <h2 className="text-2xl font-black text-slate-900 mt-3">FAQ 常见问题</h2>
+          </div>
 
-        <div className="grid gap-6 sm:grid-cols-2">
-          {courses.map((course) => (
-            <div key={course.id} className="glass-card rounded-2xl overflow-hidden flex flex-col h-full">
-              <div className="relative aspect-[16/9] w-full bg-slate-100 overflow-hidden border-b border-slate-100">
-                <img 
-                  src={course.cover_image} 
-                  alt={course.title}
-                  className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-                />
-                <span className="absolute top-3 right-3 px-2 py-1 text-[9px] font-bold tracking-wider rounded-md uppercase bg-white/90 text-slate-700 border border-slate-200 backdrop-blur-xs">
-                  已上架
-                </span>
-              </div>
-
-              <div className="p-5 flex-1 flex flex-col justify-between">
-                <div>
-                  <h3 className="font-extrabold text-sm text-slate-800 line-clamp-1 leading-snug">
-                    {course.title}
-                  </h3>
-                  <div 
-                    className="text-xs text-slate-500 mt-2 line-clamp-2 prose"
-                    dangerouslySetInnerHTML={{ __html: course.description }}
-                  />
-                </div>
-
-                <div className="mt-5 flex items-center justify-between pt-3 border-t border-slate-100">
-                  <div className="flex flex-col">
-                    <span className="text-[9px] text-slate-400 uppercase tracking-widest font-bold">应付学费</span>
-                    <span className="text-base font-black text-slate-800">
-                      ¥ {Number(course.price).toFixed(2)}
-                    </span>
+          <div className="flex flex-col gap-3">
+            {faqs.map((faq, index) => (
+              <div 
+                key={index} 
+                className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden transition-all duration-300"
+              >
+                <button
+                  onClick={() => setActiveFaq(activeFaq === index ? null : index)}
+                  className="w-full p-4 flex items-center justify-between text-left font-bold text-xs text-slate-800 hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  <span>{faq.q}</span>
+                  <span className="text-slate-400 font-normal">{activeFaq === index ? '−' : '+'}</span>
+                </button>
+                {activeFaq === index && (
+                  <div className="p-4 border-t border-slate-100 text-[11px] text-slate-500 leading-relaxed bg-slate-50/50">
+                    {faq.a}
                   </div>
-
-                  <Link
-                    id={`view-course-${course.id}`}
-                    href={`/courses/${course.id}`}
-                    className="flex items-center gap-1 px-4 py-2 rounded-xl text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 active:scale-95 transition-all shadow-md shadow-slate-900/10"
-                  >
-                    开始学习
-                    <Play className="h-3 w-3 fill-current" />
-                  </Link>
-                </div>
+                )}
               </div>
-            </div>
-          ))}
-
-          {courses.length === 0 && (
-            <div className="col-span-full py-16 text-center glass-card rounded-2xl">
-              <BookOpen className="h-8 w-8 text-slate-300 mx-auto mb-3" />
-              <p className="text-slate-400 text-xs">暂无上架课程，请以管理员身份登录并在后台创建。</p>
-            </div>
-          )}
+            ))}
+          </div>
         </div>
-      </main>
+      </section>
 
-      {/* Footer / Mobile Safety Bottom */}
-      <footer className="mt-16 border-t border-slate-200/50 py-6 px-4 text-center text-[10px] text-slate-400 safe-pb">
-        <p>© 2026 小宁学堂. All Rights Reserved.</p>
-        <p className="mt-0.5 text-[9px] text-slate-350">基于 Next.js & Supabase & 7pay 构建</p>
+      {/* Footer */}
+      <footer className="mt-16 border-t border-slate-150 py-8 px-4 text-center text-[10px] text-slate-400 safe-pb">
+        <p>© 2026 小宁 AI 学堂. All Rights Reserved.</p>
+        <p className="mt-1 text-[9px] text-slate-350">基于 Next.js & Supabase & 7pay 深度重制版</p>
       </footer>
 
       {/* AUTHENTICATION DIALOG MODAL OVERLAY */}
@@ -326,6 +517,7 @@ export default function Home() {
                   type="button"
                   onClick={() => {
                     setAuthError('');
+                    setAuthSuccess('');
                     setAuthMode(authMode === 'login' ? 'register' : 'login');
                   }}
                   className="text-xs text-blue-600 hover:underline transition-all cursor-pointer font-medium"
