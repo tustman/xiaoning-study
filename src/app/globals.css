@@ -1,36 +1,70 @@
 @import "tailwindcss";
 
 :root {
-  --bg:      oklch(99% 0.002 240);
+  --bg:      oklch(99% 0.003 240);
   --surface: oklch(100% 0 0);
-  --fg:      oklch(18% 0.012 250);
-  --muted:   oklch(54% 0.012 250);
-  --border:  oklch(92% 0.005 250);
-  --accent:  oklch(58% 0.18 255);
+  --surface-2: oklch(97.5% 0.006 240);
+  --fg:      oklch(19% 0.014 255);
+  --muted:   oklch(50% 0.014 255);
+  --border:  oklch(91% 0.007 250);
+  --accent:  oklch(58% 0.185 258);
+  --accent-hover: oklch(52% 0.185 258);
+  --accent-soft: oklch(97.5% 0.016 258);
+  --accent-soft-border: oklch(88% 0.05 258);
+  --green:  oklch(72% 0.14 155);
+  --green-soft: oklch(97.5% 0.018 155);
+  --amber:  oklch(75% 0.14 75);
+  --amber-soft: oklch(97.5% 0.02 75);
+  --rose:   oklch(68% 0.16 20);
+  --rose-soft: oklch(97.5% 0.015 20);
+  --purple: oklch(62% 0.14 295);
+  --purple-soft: oklch(97.5% 0.013 295);
 
-  --accent-subtle: oklch(from var(--accent) 0.95 0.04 255);
-  --accent-glow:   oklch(from var(--accent) 0.65 0.12 255);
-  --green:   oklch(55% 0.14 145);
-  --amber:   oklch(65% 0.14 85);
-  --rose:    oklch(55% 0.14 10);
-
-  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
-  --font-body:    -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', system-ui, sans-serif;
+  --font-body:    -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', system-ui, sans-serif;
   --font-mono:    'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, monospace;
 
-  --radius-sm: 6px;
-  --radius-md: 10px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
   --radius-lg: 16px;
-  --radius-xl: 24px;
+  --radius-xl: 22px;
+}
+
+[data-theme="dark"] {
+  --bg:      oklch(17% 0.012 255);
+  --surface: oklch(21% 0.013 255);
+  --surface-2: oklch(24% 0.014 255);
+  --fg:      oklch(94% 0.006 255);
+  --muted:   oklch(65% 0.012 255);
+  --border:  oklch(32% 0.014 255);
+  --accent-soft: oklch(30% 0.05 258);
+  --accent-soft-border: oklch(40% 0.08 258);
+  --green-soft: oklch(28% 0.04 155);
+  --amber-soft: oklch(30% 0.05 75);
+  --rose-soft: oklch(30% 0.04 20);
+  --purple-soft: oklch(30% 0.035 295);
 }
 
 @theme inline {
   --color-bg: var(--bg);
   --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
   --color-fg: var(--fg);
   --color-muted: var(--muted);
   --color-border: var(--border);
   --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-soft-border: var(--accent-soft-border);
+  --color-green: var(--green);
+  --color-green-soft: var(--green-soft);
+  --color-amber: var(--amber);
+  --color-amber-soft: var(--amber-soft);
+  --color-rose: var(--rose);
+  --color-rose-soft: var(--rose-soft);
+  --color-purple: var(--purple);
+  --color-purple-soft: var(--purple-soft);
+  
   --color-radius-sm: var(--radius-sm);
   --color-radius-md: var(--radius-md);
   --color-radius-lg: var(--radius-lg);
@@ -42,27 +76,26 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 28px;
-  border-radius: var(--radius-md);
+  padding: 13px 28px;
+  border-radius: 100px;
   font-family: var(--font-body);
   font-size: 15px;
-  font-weight: 550;
+  font-weight: 600;
   cursor: pointer;
-  border: none;
-  transition: all 0.2s ease;
-  letter-spacing: -0.01em;
+  border: 1px solid transparent;
+  transition: all 0.18s ease;
   text-decoration: none;
+  white-space: nowrap;
 }
 .btn-primary {
   background: var(--accent);
   color: #fff !important;
 }
 .btn-primary:hover { 
-  background: var(--accent-glow); 
-  transform: translateY(-1px); 
+  background: var(--accent-hover); 
 }
 .btn-outline {
-  background: transparent;
+  background: var(--surface);
   color: var(--fg);
   border: 1px solid var(--border);
 }
@@ -73,11 +106,27 @@
 .btn-ghost {
   background: transparent;
   color: var(--muted);
-  padding: 8px 16px;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
 }
 .btn-ghost:hover { 
   color: var(--fg); 
-  background: var(--border); 
+  background: var(--surface-2);
+}
+.btn-on-accent {
+  background: #fff;
+  color: var(--accent) !important;
+}
+.btn-on-accent:hover {
+  background: oklch(96% 0.01 258);
+}
+.btn-outline-on-accent {
+  background: transparent;
+  color: #fff !important;
+  border: 1px solid oklch(from #fff 1 0 0 / 0.35);
+}
+.btn-outline-on-accent:hover {
+  border-color: #fff;
 }
 
 body {
@@ -89,6 +138,7 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
 /* Custom Scrollbar */
@@ -97,14 +147,14 @@ body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #f8f9fa;
+  background: var(--bg);
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: var(--border);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: var(--muted);
 }
 
 /* iOS Bottom Safe Area utilities */
@@ -116,37 +166,33 @@ body {
   margin-bottom: env(safe-area-inset-bottom);
 }
 
-/* Glassmorphism Classes (Adapted for Clean Premium Light Theme) */
+/* Glassmorphism Classes */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(226, 232, 240, 0.6);
+  background: oklch(from var(--bg) l c h / 0.82);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border-bottom: 1px solid var(--border);
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(226, 232, 240, 0.65);
+  background: var(--surface);
+  border: 1px solid var(--border);
   box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.03);
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .glass-card:hover {
-  background: rgba(255, 255, 255, 0.95);
-  border-color: rgba(59, 130, 246, 0.25);
-  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.06);
-  transform: translateY(-3px);
+  background: var(--surface-2);
+  transform: translateY(-2px);
 }
 
 /* Custom Rich Text Editor Styles for course details */
 .prose {
-  color: #475569;
-  line-height: 1.8;
+  color: var(--fg);
+  line-height: 1.85;
 }
 .prose h1, .prose h2, .prose h3, .prose h4 {
-  color: #0f172a;
+  color: var(--fg);
   font-weight: 700;
   margin-top: 1.5rem;
   margin-bottom: 0.5rem;

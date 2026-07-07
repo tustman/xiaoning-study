@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { db, Course, Lesson, UserProfile } from '@/lib/db';
-import { Mail, Key, Sparkles, X, Play, BookOpen, Star } from 'lucide-react';
 
 interface ExtendedCourse extends Course {
   lessons: Lesson[];
@@ -13,18 +12,22 @@ export default function CoursesPage() {
   const [courses, setCourses] = useState<ExtendedCourse[]>([]);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-
-  // Auth Modal State
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
-  const [authEmail, setAuthEmail] = useState('');
-  const [authPassword, setAuthPassword] = useState('');
-  const [authError, setAuthError] = useState('');
-  const [authSuccess, setAuthSuccess] = useState('');
-  const [authLoading, setAuthLoading] = useState(false);
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [selectedLevel, setSelectedLevel] = useState<'全部' | '入门' | '进阶' | '高级'>('全部');
 
   useEffect(() => {
     async function loadData() {
+      // Get current theme
+      const savedTheme = localStorage.getItem('xiaoning-theme');
+      if (savedTheme === 'dark') {
+        setTheme('dark');
+        document.documentElement.setAttribute('data-theme', 'dark');
+      } else {
+        setTheme('light');
+        document.documentElement.removeAttribute('data-theme');
+      }
+
+      // Fetch all courses
       const allCourses = await db.getCourses();
       const published = allCourses.filter(c => c.status === 'published');
       
@@ -38,6 +41,7 @@ export default function CoursesPage() {
       }
       setCourses(coursesWithLessons);
       
+      // Sync user profile
       const activeUser = await db.syncSessionUserProfile();
       setCurrentUser(activeUser);
       setLoading(false);
@@ -45,58 +49,15 @@ export default function CoursesPage() {
     loadData();
   }, []);
 
-  const translateAuthError = (err: string): string => {
-    if (!err) return '';
-    const errMsg = err.toLowerCase();
-    if (errMsg.includes('email not confirmed')) {
-      return '邮箱尚未激活，请先前往您的邮箱点击确认链接完成验证。';
-    }
-    if (errMsg.includes('invalid login credentials') || errMsg.includes('invalid credentials')) {
-      return '邮箱或密码不正确，请确认后重新输入。';
-    }
-    if (errMsg.includes('user already exists')) {
-      return '该邮箱地址已被注册，请切换至登录面板进行登录。';
-    }
-    if (errMsg.includes('password should be at least')) {
-      return '密码安全度不足，长度至少需要 6 位字符。';
-    }
-    return err;
-  };
-
-  const handleAuthSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setAuthError('');
-    setAuthSuccess('');
-    setAuthLoading(true);
-
-    try {
-      if (authMode === 'login') {
-        const { user, error } = await db.signInWithEmail(authEmail, authPassword);
-        if (error) {
-          setAuthError(translateAuthError(error));
-        } else {
-          setCurrentUser(user);
-          setShowAuthModal(false);
-          window.location.reload();
-        }
-      } else {
-        const { user, requiresVerification, error } = await db.signUpWithEmail(authEmail, authPassword, 'user');
-        if (error) {
-          setAuthError(translateAuthError(error));
-        } else if (requiresVerification) {
-          setAuthSuccess('注册成功！验证邮件已发送。请前往您的电子邮箱点击激活链接，完成验证后即可在此处登录。');
-          setAuthEmail('');
-          setAuthPassword('');
-        } else {
-          setCurrentUser(user);
-          setShowAuthModal(false);
-          window.location.reload();
-        }
-      }
-    } catch (err: any) {
-      setAuthError(translateAuthError(err.message || '操作失败，请重试'));
-    } finally {
-      setAuthLoading(false);
+  const toggleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark';
+    setTheme(next);
+    if (next === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      localStorage.setItem('xiaoning-theme', 'dark');
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      localStorage.setItem('xiaoning-theme', 'light');
     }
   };
 
@@ -108,70 +69,104 @@ export default function CoursesPage() {
 
   const getCourseLevel = (price: number, title: string) => {
     const t = title.toLowerCase();
-    if (t.includes('实战') || t.includes('企业级') || price > 200) {
-      return { label: '进阶', className: 'level-intermediate' };
+    // Check advanced first
+    if (t.includes('高级') || t.includes('架构') || t.includes('pytorch') || t.includes('深度学习') || price > 400) {
+      return { label: '高级', className: 'level-advanced text-[var(--rose)]' };
     }
-    if (t.includes('高级') || t.includes('架构') || price > 400) {
-      return { label: '高级', className: 'level-advanced' };
+    // Check intermediate second
+    if (t.includes('实战') || t.includes('企业级') || t.includes('kubernetes') || price > 200) {
+      return { label: '进阶', className: 'level-intermediate text-[var(--amber)]' };
     }
-    return { label: '入门', className: 'level-beginner' };
+    // Default to beginner
+    return { label: '入门', className: 'level-beginner text-[var(--green)]' };
   };
 
   if (loading) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center min-h-screen bg-[#fafbfe]">
-        <div className="w-8 h-8 border-2 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
-        <p className="mt-3 text-slate-500 text-xs font-semibold">正在载入课程列表...</p>
+      <div className="flex-1 flex flex-col items-center justify-center min-h-screen bg-[var(--bg)]">
+        <div className="w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin"></div>
+        <p className="mt-3 text-[var(--muted)] text-xs font-semibold">正在载入课程列表...</p>
       </div>
     );
   }
+
+  // Filter courses by level pill selection
+  const filteredCourses = courses.filter(course => {
+    if (selectedLevel === '全部') return true;
+    const lvl = getCourseLevel(Number(course.price), course.title).label;
+    return lvl === selectedLevel;
+  });
 
   return (
     <div className="flex flex-col min-h-screen bg-[var(--bg)] text-[var(--fg)]">
       
       {/* ===== NAVIGATION ===== */}
-      <nav className="sticky top-0 z-45 backdrop-blur-md border-b border-[var(--border)] bg-white/80">
-        <div className="max-w-[1200px] mx-auto px-6 flex items-center justify-between h-16">
-          <Link href="/" className="flex items-center gap-2.5 font-semibold text-[20px] text-[var(--fg)] tracking-tight">
-            <span className="w-8 h-8 bg-[var(--accent)] rounded-lg flex items-center justify-center text-white text-[16px] font-bold shadow-sm">
+      <nav className="sticky top-0 z-40 backdrop-blur-md border-b border-[var(--border)] bg-[oklch(from_var(--bg)_l_c_h_/_0.82)]">
+        <div className="max-w-[1180px] mx-auto px-6 flex items-center justify-between h-17">
+          <Link href="/" className="flex items-center gap-2.5 font-bold text-[20px] tracking-tight text-[var(--fg)]">
+            <span className="w-7.5 h-7.5 bg-[var(--accent)] rounded-lg flex items-center justify-center text-white text-[15px] font-extrabold">
               宁
             </span>
             小宁学习
           </Link>
           
-          <div className="hidden md:flex items-center gap-1 font-medium text-sm text-[var(--muted)]">
-            <Link href="/" className="px-4 py-2 rounded-md hover:text-[var(--fg)] hover:bg-[var(--border)]">
+          <div className="hidden md:flex items-center gap-0.5 font-medium text-[14.5px]">
+            <Link href="/" className="px-4 py-2 rounded-[var(--radius-sm)] text-[var(--muted)] hover:text-[var(--fg)] hover:bg-[var(--surface-2)] transition-colors">
               首页
             </Link>
-            <Link href="/courses" className="px-4 py-2 rounded-md hover:text-[var(--fg)] hover:bg-[var(--border)] text-[var(--accent)] font-semibold">
+            <Link href="/courses" className="px-4 py-2 rounded-[var(--radius-sm)] text-[var(--fg)] bg-[var(--surface-2)] font-semibold">
               课程
             </Link>
             {currentUser && (
-              <Link href="/profile" className="px-4 py-2 rounded-md hover:text-[var(--fg)] hover:bg-[var(--border)]">
+              <Link href="/profile" className="px-4 py-2 rounded-[var(--radius-sm)] text-[var(--muted)] hover:text-[var(--fg)] hover:bg-[var(--surface-2)] transition-colors">
                 我的学习
               </Link>
             )}
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <button 
+              className="w-9 h-9 rounded-full border border-[var(--border)] bg-[var(--surface)] text-[var(--muted)] hover:text-[var(--fg)] hover:border-[var(--accent)] flex items-center justify-center cursor-pointer transition-colors"
+              onClick={toggleTheme}
+              aria-label="切换深色模式"
+            >
+              {theme === 'dark' ? (
+                <svg className="h-4.5 w-4.5 stroke-current fill-none" viewBox="0 0 24 24" strokeWidth="1.8">
+                  <circle cx="12" cy="12" r="5" />
+                  <line x1="12" y1="1" x2="12" y2="3" />
+                  <line x1="12" y1="21" x2="12" y2="23" />
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                  <line x1="1" y1="12" x2="3" y2="12" />
+                  <line x1="21" y1="12" x2="23" y2="12" />
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                </svg>
+              ) : (
+                <svg className="h-4.5 w-4.5 stroke-current fill-none" viewBox="0 0 24 24" strokeWidth="1.8">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
+              )}
+            </button>
+
             {currentUser ? (
               <div className="flex items-center gap-2.5">
                 {currentUser.role === 'admin' && (
                   <Link 
                     href="/admin/courses" 
-                    className="flex items-center gap-1 px-3.5 py-2 rounded-lg text-[12px] font-bold bg-blue-50 border border-blue-100 text-blue-600 hover:bg-blue-100 transition-all"
+                    className="flex items-center gap-1 px-3.5 py-2 rounded-lg text-[12px] font-bold bg-blue-50 border border-blue-100 text-blue-600 dark:bg-blue-950/20 dark:border-blue-900/30 dark:text-blue-400 hover:bg-blue-100 transition-all"
                   >
                     管理后台
                   </Link>
                 )}
                 
-                <div className="flex items-center gap-2 text-[13px] bg-slate-100/80 border border-[var(--border)] rounded-lg px-3.5 py-2">
+                <div className="flex items-center gap-2 text-[13px] bg-[var(--surface-2)] border border-[var(--border)] rounded-lg px-3.5 py-2">
                   <span className="font-semibold text-[var(--fg)] truncate max-w-[80px]">
                     {currentUser.nickname}
                   </span>
                   <button
                     onClick={handleSignOut}
-                    className="ml-1 text-slate-400 hover:text-rose-500 font-semibold transition-all cursor-pointer"
+                    className="ml-1 text-[var(--muted)] hover:text-rose-500 font-semibold transition-all cursor-pointer bg-none border-none p-0"
                   >
                     退出
                   </button>
@@ -179,28 +174,12 @@ export default function CoursesPage() {
               </div>
             ) : (
               <>
-                <button
-                  onClick={() => {
-                    setAuthMode('login');
-                    setAuthError('');
-                    setAuthSuccess('');
-                    setShowAuthModal(true);
-                  }}
-                  className="btn btn-ghost px-5 py-2 text-sm font-semibold"
-                >
+                <Link href="/login?mode=login" className="btn hover:bg-[var(--surface-2)] border border-[var(--border)] px-[20px] py-[9px] text-[14px] text-[var(--muted)]">
                   登录
-                </button>
-                <button
-                  onClick={() => {
-                    setAuthMode('register');
-                    setAuthError('');
-                    setAuthSuccess('');
-                    setShowAuthModal(true);
-                  }}
-                  className="btn btn-primary px-5 py-2 text-sm font-semibold"
-                >
+                </Link>
+                <Link href="/login?mode=register" className="btn btn-primary text-[14px]" style={{ padding: '9px 20px' }}>
                   免费注册
-                </button>
+                </Link>
               </>
             )}
           </div>
@@ -208,240 +187,213 @@ export default function CoursesPage() {
       </nav>
 
       {/* ===== PAGE HEADER ===== */}
-      <div className="max-w-[1200px] mx-auto w-full px-6 py-12">
-        <h1 className="text-[28px] sm:text-[38px] font-bold tracking-tight text-[var(--fg)]">全部课程</h1>
-        <p className="text-base text-[var(--muted)] mt-1.5">找到适合你当前水平的课程，从入门到精通，系统化学习编程。</p>
+      <div className="max-w-[1180px] mx-auto w-full px-6 pt-14 pb-10 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+        <div>
+          <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[13px] font-semibold bg-[var(--surface-2)] border border-[var(--border)] text-[var(--muted)] mb-3.5">
+            120+ 系统课程 · 持续更新
+          </div>
+          <h1 className="text-3xl sm:text-[38px] font-extrabold tracking-tight text-[var(--fg)] leading-none mb-2.5">全部课程</h1>
+          <p className="text-[15.5px] text-[var(--muted)] max-w-[480px] leading-normal">找到适合你当前水平的课程，从入门到精通，系统化学习编程。</p>
+        </div>
+        
+        {/* Filter Pills */}
+        <div className="flex gap-2 flex-wrap select-none">
+          {(['全部', '入门', '进阶', '高级'] as const).map((lvl) => (
+            <button
+              key={lvl}
+              onClick={() => setSelectedLevel(lvl)}
+              className={`font-mono text-[12.5px] tracking-wider px-4 py-2 rounded-full border cursor-pointer transition-colors ${
+                selectedLevel === lvl
+                  ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
+                  : 'bg-[var(--surface)] border-[var(--border)] text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
+              }`}
+            >
+              {lvl}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* ===== COURSES GRID ===== */}
-      <main className="max-w-[1200px] mx-auto w-full px-6 flex-1 mb-16">
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {courses.map((course) => {
+      <main className="max-w-[1180px] mx-auto w-full px-6 flex-1 mb-14">
+        
+        <div className="grid gap-[1px] md:grid-cols-2 lg:grid-cols-3 bg-[var(--border)] border border-[var(--border)] rounded-[var(--radius-lg)] overflow-hidden">
+          
+          {filteredCourses.map((course) => {
             const priceVal = Number(course.price);
             const levelInfo = getCourseLevel(priceVal, course.title);
+            const totalHours = Math.ceil(course.lessons.reduce((acc, curr) => acc + curr.duration, 0) / 3600);
             
             return (
-              <div 
+              <article 
                 key={course.id}
                 onClick={() => window.location.href = `/courses/${course.id}`}
-                className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-lg)] overflow-hidden transition-all duration-200 hover:translate-y-[-3px] hover:shadow-lg hover:shadow-slate-900/5 hover:border-slate-350 cursor-pointer flex flex-col justify-between"
+                className="bg-[var(--surface)] hover:bg-[var(--surface-2)] transition-colors cursor-pointer flex flex-col justify-between"
               >
                 
-                {/* Course Card Thumb */}
-                <div 
-                  className="h-40 relative flex items-center justify-center overflow-hidden bg-slate-100"
-                >
+                {/* Course Thumbnail */}
+                <div className="h-[152px] relative flex items-center justify-center overflow-hidden bg-[var(--border)] group">
                   {course.cover_image ? (
                     <img 
                       src={course.cover_image} 
                       alt={course.title}
-                      className="absolute inset-0 w-full h-full object-cover"
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-103"
                     />
                   ) : (
-                    <div className="absolute inset-0 w-full h-full bg-[oklch(from_var(--accent)_0.94_0.03_255)] flex items-center justify-center text-4xl">
+                    <div className="absolute inset-0 w-full h-full bg-[var(--accent-soft)] flex items-center justify-center text-4xl">
                       宁
                     </div>
                   )}
-                  
-                  {/* Level Tag */}
-                  <span className={`absolute top-3 left-3 z-10 px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wider uppercase ${
-                    levelInfo.label === '入门' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100/50' : 
-                    levelInfo.label === '进阶' ? 'bg-amber-50 text-amber-600 border border-amber-100/50' : 
-                    'bg-rose-50 text-rose-600 border border-rose-100/50'
-                  }`}>
-                    {levelInfo.label}
-                  </span>
 
-                  <span className="absolute z-10 w-11 h-11 rounded-full bg-white/95 flex items-center justify-center text-[var(--accent)] text-xs shadow-md shadow-black/5 opacity-0 hover:opacity-100 hover:scale-105 transition-all">
-                    ▶
+                  {/* Play Hover Overlay */}
+                  <span className="play-icon relative z-10 w-[42px] h-[42px] rounded-full bg-white/92 dark:bg-slate-900/90 flex items-center justify-center text-[var(--accent)] shadow-md transition-transform duration-200 group-hover:scale-108">
+                    <svg className="h-[15px] w-[15px] fill-current stroke-none" viewBox="0 0 24 24">
+                      <polygon points="6 3 20 12 6 21 6 3" />
+                    </svg>
+                  </span>
+                  
+                  {/* Level Badge */}
+                  <span className={`absolute top-3 left-3 z-10 px-2.75 py-1 rounded-full text-[10.5px] font-bold font-mono tracking-wider uppercase bg-white/90 dark:bg-slate-900/90 ${levelInfo.className}`}>
+                    {levelInfo.label}
                   </span>
                 </div>
 
-                {/* Course Card Body */}
-                <div className="p-5 flex-1 flex flex-col justify-between">
+                {/* Course Content */}
+                <div className="p-[22px_22px_16px] flex-1 flex flex-col justify-between">
                   <div>
-                    <h3 className="font-semibold text-[17px] text-[var(--fg)] leading-snug line-clamp-1 mb-1.5">
+                    <h3 className="font-extrabold text-[18px] text-[var(--fg)] tracking-tight leading-snug mb-2 line-clamp-1">
                       {course.title}
                     </h3>
+                    
                     <div 
-                      className="text-[13px] text-[var(--muted)] leading-relaxed line-clamp-2 mb-3.5"
+                      className="text-[13.5px] text-[var(--muted)] leading-relaxed mb-4 line-clamp-2"
                       dangerouslySetInnerHTML={{ __html: course.description }}
                     />
                     
                     {/* Meta Row */}
-                    <div className="flex items-center gap-4 text-[12px] text-[var(--muted)] font-medium">
-                      <span>📹 {course.lessons.length} 课时</span>
-                      <span>⏱ {Math.ceil(course.lessons.reduce((acc, curr) => acc + curr.duration, 0) / 3600)} 小时</span>
-                      <span className="flex items-center gap-0.5"><Star className="h-3 w-3 fill-amber-400 stroke-amber-400" /> 4.9</span>
+                    <div className="flex items-center gap-3.5 text-[12.5px] text-[var(--muted)]">
+                      <span className="flex items-center gap-1.25">
+                        <svg className="h-[15px] w-[15px] stroke-current fill-none" strokeWidth="1.8" viewBox="0 0 24 24">
+                          <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                          <line x1="8" y1="21" x2="16" y2="21" />
+                          <line x1="12" y1="17" x2="12" y2="21" />
+                        </svg>
+                        {course.lessons.length} 课时
+                      </span>
+                      <span className="flex items-center gap-1.25">
+                        <svg className="h-[15px] w-[15px] stroke-current fill-none" strokeWidth="1.8" viewBox="0 0 24 24">
+                          <circle cx="12" cy="12" r="10" />
+                          <polyline points="12 6 12 12 16 14" />
+                        </svg>
+                        {totalHours > 0 ? totalHours : 1} 小时
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <svg className="h-[15px] w-[15px] fill-current stroke-none text-amber-400" viewBox="0 0 24 24">
+                          <polygon points="12 2 15 9 22 9.5 17 14.5 18.5 22 12 18 5.5 22 7 14.5 2 9.5 9 9" />
+                        </svg>
+                        4.8 (1.2k)
+                      </span>
                     </div>
                   </div>
 
                   {/* Card Footer */}
-                  <div className="border-t border-[var(--border)] mt-4.5 pt-4 flex items-center justify-between">
-                    <span className="flex items-center gap-2 text-[13px] text-[var(--muted)] font-medium">
-                      <span className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center font-bold text-[11px] text-slate-500">
-                        小
+                  <div className="border-t border-[var(--border)] mt-[16px] pt-4.5 flex items-center justify-between">
+                    <span className="flex items-center gap-2.5 text-[13px] text-[var(--muted)] font-medium">
+                      <span className="w-5.5 h-5.5 rounded-full bg-[var(--accent)] text-white flex items-center justify-center font-bold text-[10px]">
+                        宁
                       </span>
                       小宁老师
                     </span>
-                    <span className={`font-semibold text-[15px] ${priceVal === 0 ? 'text-emerald-600' : 'text-[var(--accent)]'}`}>
-                      {priceVal === 0 ? '免费' : `¥${priceVal.toFixed(2)}`}
+                    <span className={`font-mono font-bold text-[14.5px] ${priceVal === 0 ? 'text-[var(--green)]' : 'text-[var(--accent)]'}`}>
+                      {priceVal === 0 ? '免费' : `¥${priceVal}`}
                     </span>
                   </div>
                 </div>
 
-              </div>
+              </article>
             );
           })}
 
-          {courses.length === 0 && (
-            <div className="col-span-full py-16 text-center bg-white rounded-3xl border border-[var(--border)]">
-              <BookOpen className="h-8 w-8 text-slate-300 mx-auto mb-3" />
-              <p className="text-slate-400 text-sm font-semibold">暂无上架课程，敬请期待。</p>
+          {filteredCourses.length === 0 && (
+            <div className="col-span-full py-20 text-center bg-[var(--surface)]">
+              <svg className="h-9 w-9 text-[var(--muted)] mx-auto mb-3 stroke-current fill-none" strokeWidth="1.6" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              <p className="text-[var(--muted)] text-sm font-semibold">该分类下暂无已上架的课程，敬请期待。</p>
             </div>
           )}
         </div>
+
+        {/* Pagination Buttons */}
+        {filteredCourses.length > 0 && (
+          <div className="flex justify-center gap-1.5 mt-14 mb-[72px] select-none">
+            <button className="page-btn active w-9.5 h-9.5 rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--accent)] text-white flex items-center justify-center font-mono text-[13px] cursor-pointer">1</button>
+            <button className="page-btn w-9.5 h-9.5 rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface)] text-[var(--muted)] hover:border-[var(--fg)] hover:text-[var(--fg)] flex items-center justify-center font-mono text-[13px] cursor-pointer">2</button>
+            <button className="page-btn w-9.5 h-9.5 rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface)] text-[var(--muted)] hover:border-[var(--fg)] hover:text-[var(--fg)] flex items-center justify-center font-mono text-[13px] cursor-pointer">3</button>
+            <button className="page-btn w-9.5 h-9.5 rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface)] text-[var(--muted)] hover:border-[var(--fg)] hover:text-[var(--fg)] flex items-center justify-center font-mono text-[13px] cursor-pointer">4</button>
+            <button className="page-btn w-9.5 h-9.5 rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface)] text-[var(--muted)] hover:border-[var(--fg)] hover:text-[var(--fg)] flex items-center justify-center font-mono text-[13px] cursor-pointer">›</button>
+          </div>
+        )}
+
       </main>
 
       {/* ===== FOOTER ===== */}
-      <footer className="border-t border-[var(--border)] bg-white py-12 px-6">
-        <div className="max-w-[1200px] mx-auto">
-          <div className="grid gap-10 md:grid-cols-4 mb-12">
+      <footer className="py-14 bg-[var(--surface)] border-t border-[var(--border)]">
+        <div className="max-w-[1180px] mx-auto px-6">
+          <div className="grid gap-10 sm:grid-cols-2 md:grid-cols-4 mb-12">
+            
             <div className="md:col-span-1">
-              <span className="flex items-center gap-2 font-bold text-base text-[var(--fg)] tracking-tight mb-4">
-                <span className="w-7 h-7 bg-[var(--accent)] rounded-lg flex items-center justify-center text-white text-sm font-extrabold shadow-sm">
+              <Link href="/" className="flex items-center gap-2.5 font-bold text-[19px] tracking-tight text-[var(--fg)] mb-3.5">
+                <span className="w-7.5 h-7.5 bg-[var(--accent)] rounded-lg flex items-center justify-center text-white text-[15px] font-extrabold">
                   宁
                 </span>
                 小宁学习
-              </span>
-              <p className="text-xs text-[var(--muted)] leading-relaxed max-w-xs">
+              </Link>
+              <p className="text-[13.5px] text-[var(--muted)] leading-relaxed max-w-[280px]">
                 让每个人都能学会编程。小宁学习 — 用心做教育，用技术改变未来。
               </p>
             </div>
+
             <div>
-              <h4 className="text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-4">精选课程</h4>
-              <ul className="flex flex-col gap-2.5 text-xs text-[var(--muted)]">
-                <li><Link href="/courses" className="hover:text-[var(--fg)]">Python 入门</Link></li>
-                <li><Link href="/courses" className="hover:text-[var(--fg)]">前端 React 实战</Link></li>
-                <li><Link href="/courses" className="hover:text-[var(--fg)]">AI 应用开发</Link></li>
+              <h4 className="text-[13px] font-bold text-[var(--fg)] mb-4">课程</h4>
+              <ul className="flex flex-col gap-2.5">
+                <li><Link href="/courses" className="text-[13.5px] text-[var(--muted)] hover:text-[var(--accent)] transition-colors">Python 入门</Link></li>
+                <li><Link href="/courses" className="text-[13.5px] text-[var(--muted)] hover:text-[var(--accent)] transition-colors">前端开发</Link></li>
+                <li><Link href="/courses" className="text-[13.5px] text-[var(--muted)] hover:text-[var(--accent)] transition-colors">AI 应用</Link></li>
+                <li><Link href="/courses" className="text-[13.5px] text-[var(--muted)] hover:text-[var(--accent)] transition-colors">全部课程</Link></li>
               </ul>
             </div>
+
             <div>
-              <h4 className="text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-4">关于学堂</h4>
-              <ul className="flex flex-col gap-2.5 text-xs text-[var(--muted)]">
-                <li><a href="#" className="hover:text-[var(--fg)]">讲师简介</a></li>
-                <li><a href="#" className="hover:text-[var(--fg)]">帮助中心</a></li>
-                <li><a href="#" className="hover:text-[var(--fg)]">联系我们</a></li>
+              <h4 className="text-[13px] font-bold text-[var(--fg)] mb-4">关于</h4>
+              <ul className="flex flex-col gap-2.5">
+                <li><a href="#" className="text-[13.5px] text-[var(--muted)] hover:text-[var(--accent)] transition-colors">关于我们</a></li>
+                <li><a href="#" className="text-[13.5px] text-[var(--muted)] hover:text-[var(--accent)] transition-colors">讲师入驻</a></li>
+                <li><a href="#" className="text-[13.5px] text-[var(--muted)] hover:text-[var(--accent)] transition-colors">帮助中心</a></li>
+                <li><a href="#" className="text-[13.5px] text-[var(--muted)] hover:text-[var(--accent)] transition-colors">联系我们</a></li>
               </ul>
             </div>
+
             <div>
-              <h4 className="text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-4">法律条款</h4>
-              <ul className="flex flex-col gap-2.5 text-xs text-[var(--muted)]">
-                <li><a href="#" className="hover:text-[var(--fg)]">用户协议</a></li>
-                <li><a href="#" className="hover:text-[var(--fg)]">隐私政策</a></li>
+              <h4 className="text-[13px] font-bold text-[var(--fg)] mb-4">法律</h4>
+              <ul className="flex flex-col gap-2.5">
+                <li><a href="#" className="text-[13.5px] text-[var(--muted)] hover:text-[var(--accent)] transition-colors">用户协议</a></li>
+                <li><a href="#" className="text-[13.5px] text-[var(--muted)] hover:text-[var(--accent)] transition-colors">隐私政策</a></li>
+                <li><a href="#" className="text-[13.5px] text-[var(--muted)] hover:text-[var(--accent)] transition-colors">版权声明</a></li>
               </ul>
             </div>
+
           </div>
-          <div className="border-t border-[var(--border)] pt-6 flex flex-col sm:flex-row justify-between items-center text-xs text-[var(--muted)] gap-3">
-            <span>© 2026 小宁学习. All rights reserved.</span>
-            <span>用 ❤️ 做教育</span>
+
+          <div className="border-t border-[var(--border)] pt-[22px] flex justify-between items-center text-[13px] text-[var(--muted)] flex-wrap gap-2">
+            <span>&copy; 2026 小宁学习</span>
+            <span>ALL RIGHTS RESERVED</span>
           </div>
         </div>
       </footer>
 
-      {/* AUTHENTICATION DIALOG MODAL OVERLAY */}
-      {showAuthModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/45 backdrop-blur-xs animate-fade-in">
-          <div className="bg-white border border-[var(--border)] rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl relative flex flex-col">
-            
-            {/* Modal Header */}
-            <div className="bg-slate-50 p-5 border-b border-[var(--border)] flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-slate-800" />
-                <h3 className="font-extrabold text-sm text-slate-800">
-                  {authMode === 'login' ? '学员登录' : '快速注册'}
-                </h3>
-              </div>
-              <button
-                id="close-auth-modal-btn"
-                onClick={() => setShowAuthModal(false)}
-                className="p-1 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-800 transition-all cursor-pointer"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            {/* Modal Form */}
-            <form onSubmit={handleAuthSubmit} className="p-5 flex flex-col gap-4">
-              {authError && (
-                <div className="p-3 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 text-xs font-semibold leading-relaxed">
-                  ⚠️ {authError}
-                </div>
-              )}
-
-              {authSuccess && (
-                <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 text-xs font-semibold leading-relaxed animate-pulse">
-                  ✓ {authSuccess}
-                </div>
-              )}
-
-              {/* Email */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-[var(--muted)] uppercase">
-                  邮箱地址
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={authEmail}
-                  onChange={(e) => setAuthEmail(e.target.value)}
-                  placeholder="student@example.com"
-                  className="bg-white border border-[var(--border)] rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-slate-800"
-                />
-              </div>
-
-              {/* Password */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-[var(--muted)] uppercase">
-                  登录密码
-                </label>
-                <input
-                  type="password"
-                  required
-                  value={authPassword}
-                  onChange={(e) => setAuthPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="bg-white border border-[var(--border)] rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-slate-800"
-                />
-              </div>
-
-              {/* Action Buttons */}
-              <button
-                type="submit"
-                disabled={authLoading}
-                className="w-full mt-2 py-3 bg-[var(--accent)] hover:bg-[var(--accent-glow)] text-white rounded-xl text-xs font-bold transition-all disabled:opacity-50 shadow-sm cursor-pointer border-none"
-              >
-                {authLoading ? '请稍候...' : authMode === 'login' ? '确认登录' : '立即注册'}
-              </button>
-
-              {/* Switch Mode Link */}
-              <div className="text-center mt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAuthError('');
-                    setAuthSuccess('');
-                    setAuthMode(authMode === 'login' ? 'register' : 'login');
-                  }}
-                  className="text-xs text-blue-600 hover:underline transition-all cursor-pointer font-medium bg-transparent border-none"
-                >
-                  {authMode === 'login' ? '没有账号？去注册新账号' : '已有账号？去登录'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
