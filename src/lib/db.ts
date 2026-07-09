@@ -490,14 +490,14 @@ export const db = {
     return getAuthState();
   },
 
-  async signUpWithEmail(email: string, password: string, role: 'user' | 'admin' = 'user'): Promise<{ user: UserProfile | null; requiresVerification: boolean; error: string | null }> {
+  async signUpWithEmail(email: string, password: string, nickname?: string, role: 'user' | 'admin' = 'user'): Promise<{ user: UserProfile | null; requiresVerification: boolean; error: string | null }> {
     if (supabase) {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
-            nickname: email.split('@')[0],
+            nickname: nickname || email.split('@')[0],
             role: role
           }
         }
@@ -511,7 +511,7 @@ export const db = {
         const profile: UserProfile = {
           id: data.user.id,
           email: data.user.email || '',
-          nickname: email.split('@')[0],
+          nickname: nickname || email.split('@')[0],
           role: role,
           created_at: data.user.created_at
         };
@@ -527,6 +527,9 @@ export const db = {
       }
     }
     const mockUser = this.signIn(email, role);
+    if (mockUser && nickname) {
+      mockUser.nickname = nickname;
+    }
     return { user: mockUser, requiresVerification: false, error: null };
   },
 
